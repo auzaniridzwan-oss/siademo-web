@@ -7,6 +7,7 @@ import { renderLoginModal } from './components/loginModal.js';
 import { renderDebugOverlay } from './components/debugOverlay.js';
 import { FLIGHT_DATA } from './data/flights.js';
 import { buildBookingPayload, isValidBookingSearch } from './logic/bookingPayload.js';
+import { fetchSqDemoFlights } from './services/serpapiFlightsClient.js';
 import { StorageManager } from './managers/StorageManager.js';
 import { AppLogger } from './managers/AppLogger.js';
 import { BrazeManager, EVENT_LOGGED } from './managers/BrazeManager.js';
@@ -207,9 +208,16 @@ async function runSearchAfterAuth(payload) {
 
   document.getElementById('search-loading')?.classList.remove('hidden');
 
-  await new Promise((r) => setTimeout(r, 1500));
+  const t0 = Date.now();
+  const live = await fetchSqDemoFlights(payload);
+  let list =
+    live.ok && live.rows.length > 0 ? live.rows : FLIGHT_DATA[payload.destination_code] ?? [];
+  const elapsed = Date.now() - t0;
+  const minMs = 400;
+  if (elapsed < minMs) {
+    await new Promise((r) => setTimeout(r, minMs - elapsed));
+  }
 
-  const list = FLIGHT_DATA[payload.destination_code] ?? [];
   StorageManager.set('booking_last_results', list);
 
   document.getElementById('search-loading')?.classList.add('hidden');

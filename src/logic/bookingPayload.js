@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { DEMO_DESTINATION_CODES, DEMO_ORIGIN_CODE } from '../config/flightSearchScope.js';
 
 /**
  * @param {unknown} obj
@@ -7,9 +8,8 @@ import dayjs from 'dayjs';
 export function isValidBookingSearch(obj) {
   if (!obj || typeof obj !== 'object') return false;
   const o = /** @type {Record<string, unknown>} */ (obj);
-  const codes = ['NRT', 'LHR', 'SYD'];
-  if (o.origin_code !== 'SIN') return false;
-  if (typeof o.destination_code !== 'string' || !codes.includes(o.destination_code)) return false;
+  if (o.origin_code !== DEMO_ORIGIN_CODE) return false;
+  if (typeof o.destination_code !== 'string' || !DEMO_DESTINATION_CODES.includes(o.destination_code)) return false;
   if (typeof o.trip_type !== 'string' || !o.trip_type) return false;
   if (typeof o.depart_date !== 'string' || !dayjs(o.depart_date).isValid()) return false;
   if (typeof o.return_date !== 'string' || !dayjs(o.return_date).isValid()) return false;
@@ -31,7 +31,7 @@ export function buildBookingPayload(raw) {
     return_date,
   } = raw;
   const payload = {
-    origin_code: 'SIN',
+    origin_code: DEMO_ORIGIN_CODE,
     destination_code: String(destination_code || ''),
     trip_type: String(trip_type || ''),
     depart_date: String(depart_date || ''),
