@@ -1,0 +1,64 @@
+---
+description: Gate flight search behind registration when anonymous; modal form, Braze profile creation, and login via BrazeManager.
+globs: ["**/*.js", "**/*.ts", "**/*.tsx", "**/*.html", "**/BrazeManager.*"]
+---
+
+# Registration Gate & Modal (Search)
+
+## 1. Purpose
+* **Anonymous users** must not complete a flight search without registering. When they are **not logged in** and trigger **Search**, show a **modal overlay** with a short registration form.
+* After successful submit, **create/update the user in Braze** (Web SDK) and **log the user in** (`changeUser` + session) so search can proceed.
+
+## 2. When to show the modal
+* **Logged in:** User has a valid Braze session **and** local session — use `StorageManager.get('user_id', null)` (suffix per `utilties/localstorage.mdc`) as the canonical **external_id**. If present and non-empty, treat as logged in for this gate.
+* **Not logged in:** Missing or blank `user_id`. On **Search** (same moment `handleSearch` / booking widget would run `handleSearch` in `logic/bookingdemo.mdc`):
+    1. **Intercept** before persisting `booking_search` or navigating to `SEARCH_RESULTS`.
+    2. Open the registration **modal** (do not advance the search flow yet).
+    3. Store the **pending search intent** in memory only (object mirroring what would be written to `booking_search`) so that after registration the app can run **one** persist + navigation without asking again.
+
+## 3. Modal UI (Flowbite)
+* **Component:** Flowbite **Modal** (fixed overlay, focus trap, `role="dialog"`, `aria-modal="true"`, labelled by modal title).
+* **Copy:** Explain that registration is required to search flights (demo messaging).
+* **Actions:** Primary **Submit**, secondary **Cancel** (closes modal without logging in; clears pending intent or leaves form state at implementer discretion).
+
+## 4. Form fields & validation
+| Field | Required | Rules |
+|--------|----------|--------|
+| First name | Yes | Non-empty, trim; max length reasonable (e.g. 80). |
+| Last name | Yes | Same as first name. |
+| Email | Yes | Valid email format; normalize lowercase trim; used as primary contact in Braze. |
+| Phone | No | If provided, **Singapore IDD**: accept E.164 **`+65`** followed by exactly **8** digits (mobile: typically first digit `8` or `9`; allow `6` for landline per SG numbering). Strip spaces/dashes before validate. Display hint: e.g. `+65 9123 4567`. |
+
+* **Client-side validation only** for UX; do not assume server-side auth in this demo.
+* **Accessibility:** Associate `<label>` with inputs; surface errors in text near fields and optional `aria-invalid`.
+
+## 5. Persisted storage (StorageManager)
+* **Do not** store first name, last name, email, or phone in `localStorage` (PII policy in `utilties/localstorage.mdc`).
+* **After successful registration only**, persist **`user_id`** (suffix) = the **external_id** passed to Braze `changeUser`.
+* **External ID strategy (choose one and document in README):**
+    * **Recommended:** Deterministic id from email, e.g. `sia_demo_${base64url(sha256(normalizedEmail))}` or a **UUID v4** generated once at submit — **not** the raw email string in `localStorage` if you treat email as sensitive in storage; or use **normalized email** as `user_id` value if product accepts storing email as external_id only (still minimize duplication in other keys).
+* **Minimum:** Whatever string is used as **`external_id`** for `changeUser` must be what is saved via `StorageManager.set('user_id', externalId)`.
+
+## 6. Braze integration (`BrazeManager`)
+* Implement a single orchestrated method, e.g. **`registerAndLogin(profile)`** or **`completeRegistration(payload)`**, that:
+    1. Builds **`external_id`** per §5.
+    2. Calls **`changeUser(external_id)`** then **`openSession()`** (see `braze/braze.mdc`).
+    3. Sets **standard user fields** via `braze.getUser()` (wrap in `BrazeManager` with try/catch):
+        * `setEmail(email)`
+        * `setFirstName(firstName)`
+        * `setLastName(lastName)`
+        * If phone present: `setPhoneNumber(e164String)` with normalized **`+65XXXXXXXX`** (no spaces).
+    4. Sets **custom attributes** with **`snake_case`** keys where useful for the demo, e.g. `registration_completed_at` (ISO string), `registration_source` (`flight_search_gate`).
+    5. Logs a custom event such as **`Registration - Completed`** with **non-PII** properties only (e.g. `has_phone: boolean`); **never** log full email or phone in `AppLogger` / event payloads used for debugging overlays in cleartext — redact if needed.
+    6. Calls **`requestImmediateDataFlush()`** (or equivalent supported Web SDK flush) so the profile is sent promptly.
+* **Safety:** Guard all SDK access with `if (window.braze)` / typeof checks per project Braze standards.
+
+## 7. Post-submit flow
+* On success: close modal → `StorageManager.set('user_id', externalId)` → **resume** pending search: write `booking_search`, run mock fetch / navigate per `logic/navigation.mdc` **§5 Search Flow**.
+* On failure: show inline error in modal; do not set `user_id`; do not navigate to results.
+
+## 8. Related rules
+* **`logic/bookingdemo.mdc`** — search handler must consult auth gate before persisting search state.
+* **`logic/navigation.mdc`** — search flow order; registration completes *before* step 3 (`booking_search` persist) when gating applies.
+* **`braze/braze.mdc`** — `login` / observer patterns for any UI that reflects logged-in state.
+* **`utilties/logging.mdc`** — no PII in log lines; use categories `[AUTH]` or `[UI]` for gate events.

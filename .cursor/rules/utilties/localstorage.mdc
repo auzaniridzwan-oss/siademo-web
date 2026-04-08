@@ -1,0 +1,73 @@
+---
+alwaysApply: true
+description: Standards for managing LocalStorage, session state, and key naming conventions
+globs: ["**/*.js", "index.html", "**/services/storage.js"]
+---
+
+# Local Storage & Session Management
+
+## 1. Key Naming Convention
+- **Prefix:** Persisted `localStorage` keys are always `ar_app_` + suffix to avoid collisions with third-party scripts (e.g., Braze, Flowbite).
+- **StorageManager API:** Pass **suffix only** to `StorageManager.set(key, value)`, `get(key)`, and `remove(key)`; the singleton prepends `PREFIX` (`ar_app_`). Example: `get('user_session')` reads `ar_app_user_session`.
+- **Casing:** Use `snake_case` for the suffix.
+- **Example suffixes** (arguments to `StorageManager`):
+    - `user_session`
+    - `theme_mode`
+    - `braze_init_status`
+    - `user_id` (persists as `ar_app_user_id`; use with Braze `changeUser` on load per §4)
+
+## 2. Centralized Storage Pattern
+- Do NOT use `localStorage.getItem()` directly in UI components.
+- **Requirement:** Use a singleton `StorageManager` class to gatekeep all disk I/O. This allows for easy migration to `IndexedDB` or `SessionStorage` later if needed.
+
+## 3. Data Integrity & Security
+- **JSON Handling:** Always wrap `JSON.parse()` in a `try/catch` block to handle corrupted strings.
+- **Type Safety:** The Storage Manager should return default values (e.g., `[]` or `{}`) if a key is missing to prevent `null` pointer errors in the UI.
+- **Sensitive Data:** Never store PII (Personally Identifiable Information) or plain-text passwords. Store only tokens or non-sensitive preferences.
+
+## 4. State Persistence Logic
+- **Sync with UI:** When a state changes (e.g., a notification is dismissed), update `StorageManager` immediately.
+- **Braze Synergy:** On app load, `StorageManager.get('user_id')` (persisted as `ar_app_user_id`). If present, call `braze.changeUser(id)` so the SDK session aligns with the local session.
+
+## 5. Booking & search state (no URL parameters)
+- **Single source of truth:** Search and booking **parameters** (destination, dates, trip type, etc.) must be written and read **only** through `StorageManager`, not `location.search` or hash query segments. URL hash may reflect **view name only** (see `logic/navigation.mdc`).
+- **Suggested suffix keys** (align with `logic/bookingdemo.mdc` and `.cursor/design/sia_web.json`):
+    - `booking_search` — validated object: `{ origin_code, destination_code, trip_type, depart_date, return_date, cabin_class, passengers }` (demo fields only; no PII).
+    - `booking_last_results` — optional snapshot of last filtered flight list for refresh-safe UI (same shape as mock flight rows in booking rules).
+- **Invalid payload:** If `get('booking_search', null)` is missing or fails shape checks, treat as **no active search**; do not build UI from the URL.
+
+## 6. Storage Manager Blueprint (JS)
+```javascript
+const StorageManager = {
+    PREFIX: 'ar_app_',
+    
+    set(key, value) {
+        try {
+            const serializedValue = JSON.stringify(value);
+            localStorage.setItem(`${this.PREFIX}${key}`, serializedValue);
+        } catch (e) {
+            console.error('[Storage] Error saving to disk', e);
+        }
+    },
+
+    get(key, defaultValue = null) {
+        try {
+            const item = localStorage.getItem(`${this.PREFIX}${key}`);
+            return item ? JSON.parse(item) : defaultValue;
+        } catch (e) {
+            return defaultValue;
+        }
+    },
+
+    remove(key) {
+        localStorage.removeItem(`${this.PREFIX}${key}`);
+    },
+
+    clearSession() {
+        // Only clear app-specific keys, leave Braze/System keys intact
+        Object.keys(localStorage)
+            .filter(k => k.startsWith(this.PREFIX))
+            .forEach(k => localStorage.removeItem(k));
+    }
+};
+```

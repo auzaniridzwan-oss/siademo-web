@@ -1,0 +1,37 @@
+---
+alwaysApply: true
+description: Rules for generating and maintaining the project README.md
+globs: ["README.md"]
+---
+
+# README.md Structure & Requirements
+
+## 1. Project Identity
+- **Title:** The name of the application.
+
+## 2. Required Sections
+- **Overview:** 2-3 sentences on the app's purpose.
+- **Tech Stack:**
+    - **UI:** HTML5, CSS3, Flowbite.
+    - **Icons:** FontAwesome (Kit: a21f98a3f6).
+    - **Marketing:** Braze WebSDK Integration.
+    - **Hosting:** Vercel.
+- **Setup Instructions:**
+    - Git Repo: [auzaniridzwan-oss](https://github.com/auzaniridzwan-oss)
+    - Deployment: [Vercel Project URL](https://vercel.com/auzani-ridzwans-projects)
+- **Architecture:** Mention the use of the `StorageManager` for state and `AppLogger` for centralized logging.
+
+## 3. Braze Integration Details
+- Document the specific Custom Events and User Attributes tracked in this project.
+- Provide a link to the official [Braze WebSDK Docs](https://www.braze.com/docs/developer_guide/sdk_integration/?sdktab=web).
+
+## 4. Visual Layout Reference
+- **Product chrome:** State clearly in the README whether the app uses the **full SIA-style marketing shell** (dual-level header, hero + booking widget, decorative footer) per `ui/layout.mdc` and `.cursor/design/sia_web.json`, or a constrained device frame — so readers do not assume bottom-nav / mobile-only layout by default.
+- **SPA:** Mention hash-based views (`/#/home`, `/#/search-results`) and that **search parameters live in `StorageManager`**, not the URL (see `logic/navigation.mdc`).
+
+### Best Practices for Documentation
+"Why," not "What": Code explains what is happening. Your documentation should explain why a specific decision was made (e.g., "We wrap this in a try-catch because the Braze SDK might be blocked by browser extensions").
+
+The "Bus Factor" Readme: Write the README.md as if you are handing the project over to another developer tomorrow. They should be able to run it on Vercel and understand the Braze event flow without asking you.
+
+Live Documentation: Use the AppLogger defined in previous rules to provide "live" documentation in the console. When a component initializes, it should log its version and current state.

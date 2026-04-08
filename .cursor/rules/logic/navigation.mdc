@@ -1,0 +1,39 @@
+---
+description: Logic for Single Page Application (SPA) routing and navigation, ensuring smooth transitions between search and results.
+globs: ["**/*.js", "**/*.ts", "**/*.tsx", "**/App.html"]
+---
+
+# SPA Navigation & Routing Rules
+
+## 1. Routing Strategy
+* **Pattern**: Use a **Hash-based** or **State-based** routing pattern (e.g., `/#/home`, `/#/search-results`).
+* **Intercept Links**: Prevent default browser behavior on navigation clicks to avoid full page refreshes.
+* **Scroll Management**: Ensure the window scrolls to the top `(0,0)` when a new view is rendered.
+
+## 2. Navigation State Machine
+* **Core Views**:
+    * `HOME`: The landing page with the hero image and booking widget.
+    * `SEARCH_RESULTS`: The list of available flights based on the mock data.
+    * `BOOKING_FLOW`: (Optional) The passenger detail entry screens.
+* **Transition Logic**: Use a centralized `currentView` state variable to determine which section to render.
+
+## 3. URL Synchronization
+* **Deep Linking**: Reflect the current view in the URL hash so that the **Debug Overlay** (triggered via querystring) remains consistent across views.
+* **Parameter sync**: Before navigating to SEARCH_RESULTS, write the validated search object with StorageManager, then change the hash/view. Do not read destination or dates from the URL to build the search.
+* **Deep links / refresh**: On load, read currentView from hash if you want bookmarkable screens; hydrate the booking widget and results from StorageManager, not from URL.
+
+## 4. UI Transitions (Tailwind & Flowbite)
+* **Smooth Transitions**: Use Tailwind's `transition-opacity` or `animate-fade-in` when switching between the Home search widget and the Results list.
+* **Navigation Header**:
+    * The logo must always return the user to the `HOME` state.
+    * Update the "Active" state of nav items in the SIA header based on the current route.
+
+## 5. Integration with Managers
+* **Braze Sync**: On every route change, trigger `BrazeManager.logCustomEvent('page_view', { page: currentView })`.
+* **Search Flow** (order is mandatory):
+    1. User clicks "Search" in the booking widget.
+    2. Validate inputs (dates, destination, etc.).
+    3. **`StorageManager.set('booking_search', validatedPayload)`** — persist before navigation (see `utilties/localstorage.mdc` §5 and `logic/bookingdemo.mdc`).
+    4. Optionally `StorageManager.set('booking_last_results', filteredFlights)` after the mock fetch completes.
+    5. Set `currentView` to `SEARCH_RESULTS` and update hash **for view only** (e.g. `/#/search-results`).
+    6. Render results from in-memory state and/or `StorageManager`; **do not** read search fields from the URL.

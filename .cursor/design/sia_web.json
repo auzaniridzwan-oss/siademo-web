@@ -1,0 +1,207 @@
+{
+    "project_name": "SIA-Lite-Booking-System",
+    "version": "1.0.0",
+    "design_system": {
+        "colors": {
+            "primary_navy": "#002663",
+            "accent_gold": "#DDB067",
+            "section_tan": "#F4F1EA",
+            "primary": "#002663",
+            "secondary": "#DDB067",
+            "background_light": "#FFFFFF",
+            "background_muted": "#F4F4F4",
+            "text_main": "#333333",
+            "text_muted": "#666666",
+            "accent_blue": "#0071BC",
+            "border": "#E0E0E0"
+        },
+        "typography": {
+            "font_family": "Proxima Nova, Arial, sans-serif",
+            "headings": "Serif-style for titles (e.g., Playfair Display or similar)",
+            "body": "Sans-serif for UI elements"
+        }
+    },
+    "layout": {
+        "header": {
+            "type": "sticky",
+            "elements": [
+                "Logo",
+                "Navigation Links",
+                "Utility Links (Login/Sign Up)",
+                "Language Selector"
+            ]
+        },
+        "footer": {
+            "type": "multi-column",
+            "columns": [
+                "Company",
+                "Group Partners",
+                "Where We Fly",
+                "Support"
+            ],
+            "bottom_bar": [
+                "Legal Links",
+                "Social Media Icons",
+                "Awards Badges"
+            ]
+        }
+    },
+    "pages": [
+        {
+            "page_id": "home_booking",
+            "description": "Main landing page with hero banner and booking widget.",
+            "components": [
+                {
+                    "component_id": "hero_banner",
+                    "type": "visual_header",
+                    "props": {
+                        "title": "[DYNAMIC_PROMO_TEXT]",
+                        "cta": "Discover More"
+                    }
+                },
+                {
+                    "component_id": "booking_widget",
+                    "type": "tabbed_form",
+                    "tabs": [
+                        "Book Trip",
+                        "Manage Booking",
+                        "Check In",
+                        "Flight Status"
+                    ],
+                    "fields": {
+                        "trip_type": {
+                            "type": "radio_group",
+                            "options": [
+                                "Book flights",
+                                "Redeem flights"
+                            ]
+                        },
+                        "origin": {
+                            "type": "input_readonly",
+                            "fixed_value": "Singapore (SIN)"
+                        },
+                        "destination": {
+                            "type": "select_searchable",
+                            "options": [
+                                {
+                                    "label": "Tokyo (NRT)",
+                                    "code": "NRT"
+                                },
+                                {
+                                    "label": "London (LHR)",
+                                    "code": "LHR"
+                                },
+                                {
+                                    "label": "Sydney (SYD)",
+                                    "code": "SYD"
+                                }
+                            ]
+                        },
+                        "date_picker": {
+                            "type": "dual_calendar",
+                            "selection_mode": "range",
+                            "features": [
+                                "Price indicators on dates",
+                                "Reset button"
+                            ]
+                        },
+                        "class_passengers": {
+                            "type": "dropdown_group",
+                            "fixed_values": {
+                                "class": "Economy",
+                                "passengers": "1 Adult"
+                            }
+                        },
+                        "submit": {
+                            "type": "button_primary",
+                            "label": "SEARCH"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "page_id": "flight_selection",
+            "description": "List of available flights for the selected route.",
+            "components": [
+                {
+                    "component_id": "stepper",
+                    "steps": [
+                        "Flights",
+                        "Passengers",
+                        "Review",
+                        "Payment"
+                    ],
+                    "current_step": 1
+                },
+                {
+                    "component_id": "flight_card",
+                    "structure": {
+                        "left_panel": [
+                            "Departure Time",
+                            "Arrival Time",
+                            "Duration",
+                            "Flight Number"
+                        ],
+                        "right_panel": {
+                            "type": "fare_grid",
+                            "columns": [
+                                "Lite",
+                                "Value",
+                                "Standard",
+                                "Flexi"
+                            ],
+                            "props": [
+                                "Price",
+                                "Seats Availability"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "demo_data": {
+        "fare_buckets": ["Lite", "Value", "Standard", "Flexi"],
+        "flights": {
+            "NRT": [
+                {
+                    "id": "SQ1",
+                    "flightNumber": "SQ1",
+                    "departureTime": "00:50",
+                    "arrivalTime": "08:55",
+                    "duration": "8h 5m",
+                    "prices": [null, 1070.9, 1260.9, 1590.9]
+                },
+                {
+                    "id": "SQ638",
+                    "flightNumber": "SQ638",
+                    "departureTime": "23:55",
+                    "arrivalTime": "08:00",
+                    "duration": "8h 5m",
+                    "prices": [null, null, 1250.9, 1590.9]
+                }
+            ],
+            "LHR": [
+                {
+                    "id": "SQ308",
+                    "flightNumber": "SQ308",
+                    "departureTime": "09:00",
+                    "arrivalTime": "15:40",
+                    "duration": "14h 40m",
+                    "prices": [950.0, 1100.0, 1400.0, 1800.0]
+                }
+            ],
+            "SYD": [
+                {
+                    "id": "SQ231",
+                    "flightNumber": "SQ231",
+                    "departureTime": "00:45",
+                    "arrivalTime": "11:50",
+                    "duration": "8h 5m",
+                    "prices": [750.0, 890.0, 1100.0, 1350.0]
+                }
+            ]
+        }
+    }
+}

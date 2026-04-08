@@ -1,0 +1,47 @@
+---
+description: Guidelines for replicating the Singapore Airlines flight search and home page layout using HTML, Tailwind CSS, and Flowbite.
+globs: ["**/*.html", "**/*.jsx", "**/*.tsx", "**/*.vue"]
+---
+
+# Singapore Airlines UI Style Guide
+
+## Core Layout Principles
+* **Component Library**: Use **Flowbite** for complex interactive elements (Datepickers, Dropdowns, Tabs).
+
+## Specific Component Rules
+
+### 1. Navigation Header
+* Implement a dual-level header.
+* Top bar: Slim, dark navy, containing utility links (Login, KrisFlyer).
+* Main bar: White background, SIA Navy logo on the left, navigation items in the center/right.
+
+### 2. Hero Banner 
+* **Sources** On initial load, use predefined static content.
+* **Updates** Exposes method to update the banner with new content. Linked by subscribing to BrazeManager event.
+
+### 3. Hero Booking Widget
+* **Container**: Absolute positioned overlaying a high-quality travel hero image.
+* **Tabs**: Use Flowbite "Tabs" component for "Book Trip", "Manage Booking", "Check-in", and "Flight Status".
+* **Fields**: 
+    * Use Flowbite "Floating Labels" for origin/destination.
+    * Use Flowbite "Datepicker" for departure and return dates.
+    * Apply `rounded-none` or `rounded-sm` to maintain the premium, sharp-edged SIA aesthetic.
+
+### 4. Footer
+* **Links** Footer links are purely decorative.
+
+### 5. Tailwind Configuration Hints
+* **Canonical tokens:** Use `.cursor/design/sia_web.json` → `design_system.colors` (`primary_navy`, `accent_gold`, `section_tan`; aliases `primary` / `secondary` match navy / gold).
+* **Primary Navy**: `bg-[#002663]` — `colors.primary_navy`
+* **Primary Gold (CTAs, fare prices)**: `bg-[#DDB067]` or `text-[#DDB067]` — `colors.accent_gold`
+* **Section tan**: `bg-[#F4F1EA]` — `colors.section_tan`
+
+## Implementation Steps
+* Use `flex` and `grid` for the responsive "Flight Search" grid (Origin | Destination | Dates | Passengers).
+* Ensure the "Search" button is full-width on mobile and spans the final column on desktop using SIA Gold.
+* Use Flowbite `Dropdowns` for passenger selection (Adults, Children, Infants) with increment/decrement buttons.
+
+## Quality Checklist
+* Does the search bar utilize the full width of the container?
+* Are the Flowbite components styled with SIA Navy/Gold instead of the default Blue?
+* Is the layout mobile-responsive, stacking the booking fields vertically on small screens?

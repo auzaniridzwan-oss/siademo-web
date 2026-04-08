@@ -1,0 +1,33 @@
+---
+description: Architecture for the Braze REST Manager using Vercel Serverless Functions to securely proxy API requests for user profiles and attributes.
+globs: ["**/api/braze/*.ts", "**/managers/BrazeRestManager.ts"]
+---
+
+# Braze REST Proxy Architecture
+
+## 1. Security & Environment
+* **Server-Side Only**: Strictly prohibit calling `api.braze.com` directly from the frontend.
+* **API Keys**: Use `process.env.BRAZE_REST_API_KEY` within Vercel functions.
+* **Endpoint Protection**: The Vercel proxy should validate that the request contains a valid `session_id` or `external_id` before forwarding to Braze.
+
+## 2. Vercel Serverless Function (`/api/braze/user-data`)
+* **Method**: `GET` or `POST`.
+* **Logic**:
+    * Receive `external_id` from the client request.
+    * Construct the Braze `/users/export/ids` request.
+    * **Target URL**: `${process.env.BRAZE_INSTANCE_URL}/users/export/ids`.
+    * **Payload**: Include `external_ids: [external_id]` and specific fields (e.g., `custom_attributes`).
+
+## 3. Frontend REST Manager (`BrazeRestManager`)
+* **Role**: Acts as the client-side interface to the Vercel proxy.
+* **Methods**:
+    * `fetchUserProfile(externalId)`: Calls `/api/braze/user-data?id=...`.
+    * `getLatestAttributes(externalId)`: Filters the returned profile for custom traits.
+* **Caching**: Implement a simple short-lived cache (e.g., 30 seconds) to prevent redundant API calls during rapid UI navigation.
+
+## 4. Error Handling
+* **Proxy Errors**: Return clean JSON errors (e.g., `404 User Not Found` or `500 API Unavailable`).
+* **Rate Limiting**: Handle Braze's `429 Too Many Requests` by passing the status back to the client so the UI can show a "Retry later" message.
+
+## 5. Integration with Debug Overlay
+* **Syncing**: When the Debug Overlay opens, it should trigger `BrazeRestManager.fetchUserProfile()` to ensure the displayed data matches the server-side truth, not just the local SDK state.

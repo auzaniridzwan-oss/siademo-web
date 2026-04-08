@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+description: Standards for FontAwesome iconography and global script integration
+globs: ["index.html", "**/*.js", "**/*.css", "**/components/*"]
+---
+
+# Iconography & FontAwesome
+
+## 1. Script Integration
+- **Source:** Use the personal FontAwesome Kit: `https://kit.fontawesome.com/a21f98a3f6.js`.
+- **Placement:** Must be loaded in the `<head>` of `index.html` with the `crossorigin="anonymous"` attribute.
+- **Loading:** Use `async` or `defer` 
+
+## 2. Usage Patterns
+- **Library:** Use "Pro" or "Free" icons consistent with the kit's availability (prefer `fas` for solid, `far` for regular).
+- **Sizing:** - **Header Icons:** `1.2rem` (approx 20px).
+    - **Bottom Nav Icons:** `1.5rem` (approx 24px) to ensure thumb-readability.
+    - **Notifications:** Use the `fa-layers` pattern for numeric badges.
+
+## 3. Component Mapping
+- **Navigation:**
+    - Home: `<i class="fa-solid fa-house"></i>`
+    - Notifications: `<i class="fa-solid fa-bell"></i>`
+    - Menu/Hamburger: `<i class="fa-solid fa-bars"></i>`
+    - User/Profile: `<i class="fa-solid fa-circle-user"></i>`
+- **Actions:**
+    - Close/Dismiss: `<i class="fa-solid fa-xmark"></i>`
+    - Chevron/Dropdown: `<i class="fa-solid fa-chevron-down"></i>`
+
+## 4. Accessibility & CSS
+- **Aria:** Every icon must include `aria-hidden="true"` if it is purely decorative.
+- **Coloring:** Icons should inherit `currentColor` from their parent elements (e.g., the `.active` class in the Bottom Nav).
+- **Alignment:** Use `display: inline-flex; align-items: center; justify-content: center;` for containers to prevent "jumping" text.
+
+## 5. Blueprint Implementation (HTML)
+```html
+<script src="[https://kit.fontawesome.com/a21f98a3f6.js](https://kit.fontawesome.com/a21f98a3f6.js)" crossorigin="anonymous"></script>
+
+<button class="icon-btn" aria-label="Open Menu">
+  <i class="fa-solid fa-bars" aria-hidden="true"></i>
+</button>

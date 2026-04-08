@@ -1,0 +1,30 @@
+/**
+ * @returns {string}
+ */
+export function renderDebugOverlay() {
+  return `
+  <div id="debug-drawer" class="fixed top-0 left-0 z-[100] h-screen w-80 max-w-[90vw] p-4 overflow-y-auto transition-transform -translate-x-full bg-white border-r border-sia-border shadow-xl" tabindex="-1" aria-labelledby="debug-drawer-label">
+    <div class="flex items-center justify-between mb-4">
+      <h2 id="debug-drawer-label" class="text-sm font-semibold text-sia-navy">Debug</h2>
+      <button type="button" id="debug-drawer-close" class="p-1 text-sia-text-muted hover:text-sia-navy" aria-label="Close debug panel">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+    <button type="button" id="debug-refresh-profile" class="mb-3 text-xs px-2 py-1 border border-sia-border rounded-sm hover:bg-sia-muted w-full">Refresh profile (REST)</button>
+    <div class="space-y-4 text-xs">
+      <div>
+        <h3 class="font-medium text-sia-text mb-1">SDK user</h3>
+        <pre id="debug-sdk-user" class="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-32"></pre>
+      </div>
+      <div>
+        <h3 class="font-medium text-sia-text mb-1">REST profile</h3>
+        <pre id="debug-rest-profile" class="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-48"></pre>
+      </div>
+      <div>
+        <h3 class="font-medium text-sia-text mb-1">Event log</h3>
+        <ul id="debug-event-log" class="space-y-1 max-h-64 overflow-y-auto"></ul>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="debug-drawer-trigger" class="hidden fixed bottom-4 left-4 z-[99] px-3 py-2 text-xs font-medium bg-sia-navy text-white rounded-sm shadow">Debug</button>`;
+}

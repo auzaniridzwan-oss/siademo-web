@@ -1,0 +1,29 @@
+---
+description: Logic and UI for the Debug Overlay panel, emphasizing the reactive subscription to BrazeManager events.
+globs: ["**/*.js", "**/*.ts", "**/*.tsx", "**/*.html"]
+---
+
+# Debug Overlay & Braze Integration Rules
+
+## 1. Trigger & Persistence
+* **Querystring Activation**: Render the debug toolbar only if `window.location.search` includes `debug=true`.
+* **State Persistence**: The overlay should remain open or closed based on a local state variable during the session.
+
+## 2. BrazeManager & BrazeRestManager
+* **SDK custom events (live):** Subscribe via `BrazeManager.subscribe('EVENT_LOGGED', (payload) => { ... })` so the overlay event log updates when `logCustomEvent` / wrappers fire. Use the **`eventType` + `callback`** shape defined in `braze/braze.mdc`; always hold the returned `unsubscribe()` and dispose on teardown.
+* **Custom attributes / server truth:** `BrazeRestManager` (see `braze/brazeREST.mdc`) has **no standing event stream** for attributes. On overlay **open** (or mount), call `BrazeRestManager.fetchUserProfile(externalId)` and merge the response into the attributes panel. Optionally re-fetch on demand with a "Refresh profile" control.
+
+## 3. Reactive UI Updates
+* **Live Event List**: The "Event Log" section of the overlay must automatically prepend new events as they happen in the background.
+* **Visual Cue**: Briefly highlight or flash a new event entry in SIA Gold (`#DDB067`) when it is added to the list to alert the developer.
+
+## 4. Overlay Panel Structure
+* **Component**: Flowbite "Drawer" (left-aligned).
+* **Data Retrieval**:
+    * **Initial Load**: Call `BrazeManager.getUserData()` on mount.
+    * **Live Updates**: Use the subscription to refresh the `attributes` and `eventList` state.
+* **Formatting**: Render JSON objects using `<pre class="bg-gray-100 p-2 rounded text-xs">` for technical clarity.
+
+## 5. Technical Implementation Example (Pseudocode)
+* **Event log subscriber:** `const off = BrazeManager.subscribe('EVENT_LOGGED', (payload) => prependEventRow(payload));`
+* **Trigger:** When the user runs search, `BrazeManager.logCustomEvent('flight_search', { ... })` runs; `EVENT_LOGGED` listeners update the overlay without coupling UI to raw `braze` calls.

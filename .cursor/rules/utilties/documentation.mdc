@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+description: Standards for JSDoc, inline comments, and code self-documentation
+globs: ["**/*.js", "**/*.css"]
+---
+
+# Code Documentation Standards
+
+## 1. JSDoc for Functions & Classes
+Every function must include a JSDoc block defining its purpose, parameters, and return values.
+- **Example:**
+  ```javascript
+  /**
+   * Initializes the Braze WebSDK and sets up the user session.
+   * @param {string} apiKey - The Braze API key from the dashboard.
+   * @param {Object} options - Configuration options for initialization.
+   * @returns {boolean} - Returns true if initialization was successful.
+   */
+  function initBraze(apiKey, options) { ... }
+  ```
+  

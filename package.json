@@ -1,0 +1,29 @@
+{
+  "name": "sia-demo-booking",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js --max-warnings 0",
+    "lint:css": "stylelint \"src/**/*.css\" --allow-empty-input"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.16.0",
+    "globals": "^17.4.0",
+    "postcss": "^8.4.49",
+    "stylelint": "^16.11.0",
+    "stylelint-config-standard": "^36.0.1",
+    "tailwindcss": "^3.4.15",
+    "vite": "^6.0.3"
+  },
+  "dependencies": {
+    "@braze/web-sdk": "^6.6.0",
+    "dayjs": "^1.11.13",
+    "flowbite": "^2.5.2"
+  }
+}

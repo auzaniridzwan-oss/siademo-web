@@ -1,0 +1,26 @@
+# Dependencies & build
+node_modules/
+dist/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor & tooling
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Debug / dumps
+*.localstorage-dump
+coverage/
+
+# Vercel (optional local)
+.vercel

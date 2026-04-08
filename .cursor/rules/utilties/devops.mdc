@@ -1,0 +1,30 @@
+---
+alwaysApply: true
+description: Standards for Git workflows, repository integration, and commit conventions
+globs: [".github/**/*", ".gitignore", "README.md", "package.json"]
+---
+
+# Git & Repository Integration
+
+## 1. Remote Configuration
+- **Target Repository:** `https://github.com/auzaniridzwan-oss`
+- **Origin:** Ensure the remote origin is set to this GitHub profile.
+- **Privacy:** Always maintain a robust `.gitignore` to prevent committing `node_modules`, `.env` files, or LocalStorage dumps.
+
+## 2. Commit Convention (Conventional Commits)
+All commits must follow the `type(scope): description` format to ensure a clean history:
+- `feat`: A new feature (e.g., `feat(ui): add passenger details step`).
+- `fix`: A bug fix (e.g., `fix(braze): resolve init timeout`).
+- `docs`: Documentation only changes.
+- `style`: Changes that do not affect the meaning of the code (formatting, missing semi-colons, etc).
+- `refactor`: A code change that neither fixes a bug nor adds a feature.
+- `chore`: Updating build tasks, package manager configs, etc.
+
+## 3. Branching Strategy
+- **Main Branch:** `main` (Production-ready code).
+- **Feature Branches:** `feature/feature-name` (e.g., `feature/braze-sdk-setup`).
+- **Fix Branches:** `fix/issue-name`.
+
+## 4. GitHub Actions & CI
+- **Vercel Integration:** Ensure the repository is linked to the [auzani-ridzwans-projects](https://vercel.com/auzani-ridzwans-projects) Vercel account for automatic deployments on push.
+- **Workflow:** If creating a `.github/workflows/main.yml`, ensure it includes a step for linting JS and CSS to maintain the standards defined in the other `.mdc` rules.

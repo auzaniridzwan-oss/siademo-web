@@ -1,0 +1,56 @@
+---
+description: Logic for the centralized BrazeManager class including SDK initialization, user session management, and the Observer pattern for event broadcasting.
+globs: ["**/BrazeManager.ts", "**/BrazeManager.js"]
+---
+
+# Braze SDK Manager Architecture
+
+## 1. Initialization & Singleton
+* **Pattern**: Implement `BrazeManager` as a **Singleton** class to ensure only one SDK instance exists.
+* **Initialization**: 
+    * Automatically call `braze.initialize()` using your API Key and SDK Endpoint.
+    * Set `allow_tracking` to `true` and enable `no_cookies: false` for standard session tracking.
+    * Call `braze.automaticallyShowInAppMessages()` to handle IAMs by default.
+
+## 2. User Management
+* **Login Logic**: Expose a `login(externalId)` method.
+    * It must call `braze.changeUser(externalId)`.
+    * Immediately following login, it should call `braze.openSession()`.
+* **Profile Methods**: 
+    * `setCustomAttribute(key, value)`: Wrapper for `braze.getUser().setCustomAttribute()`.
+    * `logCustomEvent(name, properties)`: Wrapper for `braze.logCustomEvent()`.
+
+## 3. Observer Pattern (Subscription Logic)
+* **Internal State**: Maintain a `listeners` array or Map to store callback functions.
+* **Event Types**: Support subscriptions for:
+    * `EVENT_LOGGED`: Triggered when `logCustomEvent` is called.
+    * `IAM_RECEIVED`: Triggered via `braze.subscribeToInAppMessage()`.
+    * `CONTENT_CARDS_UPDATED`: Triggered via `braze.subscribeToContentCardsUpdates()`.
+* **The `subscribe(eventType, callback)` Method**:
+    * Allows components to register for specific event types.
+    * Must return an `unsubscribe()` function to prevent memory leaks.
+* **Broadcasting**: Inside the `BrazeManager` wrappers (like `logCustomEvent`), manually loop through and execute the relevant registered listeners.
+
+## 4. Technical Constraints
+* **SDK Reference**: Use the official `braze` (formerly `appboy`) namespace.
+* **Typing**: If using TypeScript, define interfaces for `BrazeEvent` and `UserAttributes` to ensure type safety across the app.
+* **Error Handling**: Wrap SDK calls in `try/catch` blocks to prevent the website from crashing if the SDK fails to load (e.g., due to ad-blockers).
+
+## 5. Implementation Example
+* **Logging + notifying** (inside `BrazeManager`; wrap SDK calls in `try/catch` per §4):
+  ```javascript
+  /**
+   * @param {string} name
+   * @param {Record<string, unknown>} [props]
+   */
+  logCustomEvent(name, props) {
+    try {
+      if (typeof braze !== 'undefined' && braze.logCustomEvent) {
+        braze.logCustomEvent(name, props);
+      }
+    } catch (e) {
+      console.warn('[BrazeManager] logCustomEvent failed', e);
+    }
+    this.notify('EVENT_LOGGED', { name, props });
+  }
+  ```

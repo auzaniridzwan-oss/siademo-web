@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+.fade-view {
+  animation: sia-fade-in 0.28s ease-out;
+}
+
+@keyframes sia-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.event-log-flash {
+  animation: sia-gold-flash 0.9s ease-out;
+}
+
+@keyframes sia-gold-flash {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+
+  30% {
+    background-color: rgb(221 176 103 / 35%);
+  }
+}

@@ -1,0 +1,49 @@
+---
+description: Logic and state management for the Singapore Airlines flight search simulation.
+globs: ["**/*.js", "**/*.ts", "**/*.tsx", "**/*.vue"]
+---
+
+# SIA Booking Demo Logic
+
+## Core Flight Data Structure
+* **Source of record:** Keep mock structure aligned with `.cursor/design/sia_web.json` `demo_data.flights` (destination keys → arrays of rows).
+* **Mock Data**: Pre-define a `FLIGHT_DATA` map (or parallel constant) keyed by `NRT`, `LHR`, `SYD`.
+* **Row shape** (each flight in an array):
+    * `flightNumber` (or `id` matching design e.g. `SQ1`)
+    * `departureTime` / `arrivalTime` (or `dep` / `arr` if mirroring JSON)
+    * `duration` (string or minutes; required for UI)
+    * `prices`: **array of four numbers or `null`**, in fixed order: **Lite, Value, Standard, Flexi** — `null` means sold out / unavailable for that bucket (see flight selection fare grid in design JSON).
+* **Deprecated:** Do not model a single scalar `price` only; the results UI is a fare grid.
+
+## Search Constraints
+* **Origin**: Hardcode "Singapore (SIN)" as the origin. Disable or set the input to read-only.
+* **Destinations**: Provide a select/dropdown limited to:
+    * Tokyo (NRT)
+    * London (LHR)
+    * Sydney (SYD)
+* **Fixed Inputs**: Hardcode the following values (do not create interactive inputs for these):
+    * **Class**: Economy
+    * **Passengers**: 1 Adult
+
+## Application Logic
+* **Date Handling**: Use `dayjs` or native `Date` objects to ensure the "Return" date is not before the "Depart" date.
+* **Search Function**:
+    * Implement a `handleSearch` function that triggers a "Loading" state for 1.5 seconds (to simulate real API latency).
+    * Filter the `FLIGHT_DATA` based on the selected `destinationCode`.
+* **State Management**:
+    * Track `isSearching` (boolean) to show/hide the results section.
+    * Track `searchResults` (array) to store the filtered flights (rows in `prices`/grid shape above).
+    * Persist search and optional results snapshots **only** via `StorageManager` (suffix keys; see `utilties/localstorage.mdc` §5 — **not** URL query or hash parameters).
+    * Any user action that changes search parameters must call `StorageManager.set('booking_search', validatedObject)`.
+    * Home widget and results list read parameters **only** via `StorageManager.get('booking_search', null)` (and optionally `booking_last_results`).
+    * If `booking_search` is missing or fails validation, treat as **no search yet**; keep the user on the correct view and avoid silent failures on `null`.
+* **Search payload (suffix `booking_search`):** `{ origin_code, destination_code, trip_type, depart_date, return_date, cabin_class, passengers }` — demo-safe fields only, no PII. Optional `fare_class` if the UI tracks a pre-selected bucket.
+
+## Component Integration (Tailwind & Flowbite)
+* **Results Display**: Map through `searchResults` and render cards using Flowbite's "Card" component or standard Tailwind flex rows; each row exposes the **four fare cells** from `prices[]` with unavailable state when entry is `null`.
+* **Fares**: Display each available price prominently in SIA Gold (`#DDB067`); show sold-out or disabled styling when `prices[i] === null`.
+* **Empty State**: Show a "No flights found" message if the search is performed without valid dates.
+
+## Logic Examples
+* **Data lookup**: `const results = FLIGHT_DATA[destinationCode] ?? [];` (or filter if using a flat list with `destination` on each row).
+* **Price variance**: Optionally adjust numeric entries in `prices` based on depart month (never drop the length-4 array; use `null` only for sold-out).
