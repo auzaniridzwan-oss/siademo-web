@@ -22,8 +22,8 @@ export const HIGHLIGHTS_DEMO_PROMOS = [
     imageUrl:
       'https://www.singaporeair.com/content/dam/sia/web-assets/images/ppsclub-krisflyer/highlightsbanner/2026/january/KFBF_Highlights_Tile_Regular_690x360.jpg',
     imageAlt: '',
-    href: '#/home',
-    external: false,
+    href: 'https://www.singaporeair.com',
+    external: true,
     expiresAt: null,
     source: 'demo',
   },
@@ -35,8 +35,8 @@ export const HIGHLIGHTS_DEMO_PROMOS = [
     imageUrl:
       'https://www.singaporeair.com/content/dam/sia/web-assets/images/local/sg/sydney/WSI_airport_690x360.jpg',
     imageAlt: '',
-    href: '#/home',
-    external: false,
+    href: 'https://www.singaporeair.com',
+    external: true,
     expiresAt: null,
     source: 'demo',
   },

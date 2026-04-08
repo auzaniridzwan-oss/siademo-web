@@ -120,7 +120,7 @@ function render() {
   const showDebugOverlay = isDebugOverlayEligible();
 
   app.innerHTML = `
-    ${renderShellHeader({ activeView: currentView })}
+    ${renderShellHeader({ activeView: currentView, loggedIn: hasLoggedInUserId() })}
     <main id="main-view" class="flex flex-col min-h-[40vh]"></main>
     ${renderShellFooter()}
     ${renderRegistrationModal()}

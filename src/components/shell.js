@@ -2,11 +2,16 @@ import siaLogoSmallUrl from '../images/sia-logo-small.png';
 
 /**
  * Dual-level SIA-style header and marketing footer.
- * @param {{ activeView: string }} opts
+ * @param {{ activeView: string, loggedIn?: boolean }} opts
  * @returns {string} HTML
  */
 export function renderShellHeader(opts) {
-  const { activeView } = opts;
+  const { activeView, loggedIn = false } = opts;
+  const authLinks = loggedIn
+    ? ''
+    : `
+        <a href="#" id="header-login-link" data-nav="utility" class="hover:underline">Login</a>
+        <a href="#" data-nav="utility" class="hover:underline">Sign Up</a>`;
   const navCls = (v) =>
     v === activeView
       ? 'text-sia-navy font-semibold border-b-2 border-sia-gold pb-0.5'
@@ -18,8 +23,7 @@ export function renderShellHeader(opts) {
       <div class="max-w-7xl mx-auto px-4 flex justify-end gap-6 py-2 items-center">
         <a href="#" data-nav="utility" class="hover:underline">KrisFlyer</a>
         <button type="button" id="debug-launcher-recovery" class="hidden hover:underline text-white" aria-label="Show debug panel">Debug</button>
-        <a href="#" id="header-login-link" data-nav="utility" class="hover:underline">Login</a>
-        <a href="#" data-nav="utility" class="hover:underline">Sign Up</a>
+        ${authLinks}
         <button type="button" class="inline-flex items-center gap-1 hover:underline" aria-label="Language">
           <span>EN</span>
           <i class="fa-solid fa-chevron-down text-[0.65rem]" aria-hidden="true"></i>
