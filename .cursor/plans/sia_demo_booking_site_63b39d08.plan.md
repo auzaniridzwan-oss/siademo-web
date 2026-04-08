@@ -7,25 +7,25 @@ todos:
     status: completed
   - id: scaffold
     content: Add Vite + Tailwind + Flowbite, index.html (FA kit, Braze SDK), tail.theme tokens from sia_web.json, .gitignore, .env.example
-    status: in_progress
+    status: completed
   - id: core-managers
     content: Implement StorageManager, AppLogger, BrazeManager (singleton + subscribe), BrazeRestManager with 30s cache
-    status: pending
+    status: completed
   - id: shell-router
     content: Dual-level header/footer, hero; hash router HOME + SEARCH_RESULTS; page_view events; scroll-to-top
-    status: pending
+    status: completed
   - id: booking-ui-logic
     content: Booking widget (tabs, fields per JSON); FLIGHT_DATA; handleSearch with 1.5s delay, fare grid cards, StorageManager keys
-    status: pending
+    status: completed
   - id: registration
     content: Search gate + Flowbite modal + completeRegistration + pending intent resume
-    status: pending
+    status: completed
   - id: vercel-api-debug
     content: api/braze/user-data proxy; debug=true drawer + EVENT_LOGGED subscription + REST profile on open
-    status: pending
+    status: completed
   - id: docs-ci
     content: README per readme.mdc; optional GitHub workflow lint
-    status: pending
+    status: completed
 isProject: false
 ---
 
