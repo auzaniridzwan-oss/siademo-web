@@ -58,7 +58,7 @@ class BrazeManagerClass {
    */
   initialize(apiKey, baseUrl) {
     if (!apiKey || !baseUrl) {
-      AppLogger.warn('[SDK]', 'Braze init skipped — missing VITE_BRAZE_API_KEY or VITE_BRAZE_SDK_BASE_URL');
+      AppLogger.warn('[SDK]', 'Braze init skipped — missing VITE_BRAZE_SDK_KEY or VITE_BRAZE_SDK_URL');
       return false;
     }
     try {

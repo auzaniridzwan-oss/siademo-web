@@ -390,8 +390,8 @@ export function bootstrapApp() {
 
   ensureSearchLoadingOverlay();
 
-  const apiKey = import.meta.env.VITE_BRAZE_API_KEY || '';
-  const baseUrl = import.meta.env.VITE_BRAZE_SDK_BASE_URL || '';
+  const apiKey = import.meta.env.VITE_BRAZE_SDK_KEY || '';
+  const baseUrl = import.meta.env.VITE_BRAZE_SDK_URL || '';
   BrazeManager.initialize(apiKey, baseUrl);
   BrazeManager.syncUserFromStorage();
 

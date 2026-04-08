@@ -1,6 +1,6 @@
 /**
  * Vercel serverless proxy: Braze REST `/users/export/ids`.
- * Env: `BRAZE_REST_API_KEY`, `BRAZE_INSTANCE_URL` (e.g. https://rest.iad-01.braze.com, no trailing slash).
+ * Env: `BRAZE_REST_API_KEY`, `BRAZE_REST_API_URL` (e.g. https://rest.iad-01.braze.com, no trailing slash).
  * @param {import('http').IncomingMessage & { query?: Record<string, string> }} req
  * @param {import('http').ServerResponse & { status: (n: number) => any, json: (b: unknown) => void }} res
  * @returns {Promise<void>}
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   }
 
   const key = process.env.BRAZE_REST_API_KEY;
-  const baseRaw = process.env.BRAZE_INSTANCE_URL;
+  const baseRaw = process.env.BRAZE_REST_API_URL;
   if (!key || !baseRaw) {
     res.status(503).json({ error: 'Braze REST proxy not configured' });
     return;

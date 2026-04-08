@@ -16,8 +16,8 @@ SIA Demo Booking is a **marketing-style single-page demo** that recreates a Sing
 1. **Clone** the repository from [GitHub — auzaniridzwan-oss](https://github.com/auzaniridzwan-oss) (create the remote repo under that org, then `git remote add origin …` and push `main`).
 2. **Install:** `npm ci` (or `npm install`).
 3. **Environment:** Copy [`.env.example`](.env.example) to `.env` and set:
-   - `VITE_BRAZE_API_KEY` — Web SDK key (safe for bundling into client).
-   - `VITE_BRAZE_SDK_BASE_URL` — SDK endpoint host (e.g. `sdk.iad-03.braze.com`).
+   - `VITE_BRAZE_SDK_KEY` — Web SDK key (safe for bundling into client).
+   - `VITE_BRAZE_SDK_URL` — SDK endpoint host (e.g. `sdk.iad-03.braze.com`).
    - **Never** put the REST API key in `VITE_*` variables.
 4. **Dev server:** `npm run dev` → Vite (default [http://localhost:5173](http://localhost:5173)).
 5. **Full-stack local API:** For `/api/braze/user-data`, run [`vercel dev`](https://vercel.com/docs/cli/dev) (often on port 3000) so the proxy exists; Vite is configured to forward `/api` to `http://127.0.0.1:3000`. Without it, the debug REST panel returns network errors locally—that is expected.
@@ -28,7 +28,7 @@ SIA Demo Booking is a **marketing-style single-page demo** that recreates a Sing
 Import the GitHub repo into the [auzani-ridzwans-projects](https://vercel.com/auzani-ridzwans-projects) team. Set:
 
 - **Framework:** Vite; **output:** `dist`.
-- **Environment variables:** same `VITE_*` as local; plus **server-only** `BRAZE_REST_API_KEY` and `BRAZE_INSTANCE_URL` (REST base URL, e.g. `https://rest.iad-01.braze.com`).
+- **Environment variables:** same `VITE_*` as local; plus **server-only** `BRAZE_REST_API_KEY` and `BRAZE_REST_API_URL` (REST base URL, e.g. `https://rest.iad-01.braze.com`).
 
 ## Architecture
 

@@ -15,7 +15,7 @@ globs: ["**/api/braze/*.ts", "**/managers/BrazeRestManager.ts"]
 * **Logic**:
     * Receive `external_id` from the client request.
     * Construct the Braze `/users/export/ids` request.
-    * **Target URL**: `${process.env.BRAZE_INSTANCE_URL}/users/export/ids`.
+    * **Target URL**: `${process.env.BRAZE_REST_API_URL}/users/export/ids`.
     * **Payload**: Include `external_ids: [external_id]` and specific fields (e.g., `custom_attributes`).
 
 ## 3. Frontend REST Manager (`BrazeRestManager`)

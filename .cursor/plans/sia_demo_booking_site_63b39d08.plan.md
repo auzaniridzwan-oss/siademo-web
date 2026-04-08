@@ -50,8 +50,8 @@ The workspace currently contains **only** design and rules under `.cursor/`—no
 - In the **[auzani-ridzwans-projects](https://vercel.com/auzani-ridzwans-projects)** Vercel team/account, **Import** the new GitHub repo.
 - **Framework preset:** Vite; **build command** `npm run build` (or equivalent); **output** `dist` (Vite default).
 - **Environment variables** (names illustrative—align with `.env.example` during implementation):
-  - **Client / build:** e.g. `VITE_BRAZE_API_KEY`, `VITE_BRAZE_SDK_ENDPOINT` (or project’s chosen `import.meta.env` names for Web SDK only—never REST keys in the browser).
-  - **Serverless only:** `BRAZE_REST_API_KEY`, `BRAZE_INSTANCE_URL` for `/api/braze/user-data` ([brazeREST.mdc](.cursor/rules/braze/brazeREST.mdc)).
+  - **Client / build:** e.g. `VITE_BRAZE_SDK_KEY`, `VITE_BRAZE_SDK_URL` (or project’s chosen `import.meta.env` names for Web SDK only—never REST keys in the browser).
+  - **Serverless only:** `BRAZE_REST_API_KEY`, `BRAZE_REST_API_URL` for `/api/braze/user-data` ([brazeREST.mdc](.cursor/rules/braze/brazeREST.mdc)).
 - Redeploy after env changes; confirm preview deployments on PRs if enabled.
 
 **README:** Document clone URL, `npm install` / `npm run dev`, required env vars for local dev vs Vercel, and the deployment URL once the project is linked.
@@ -143,7 +143,7 @@ flowchart LR
 
 ## 7. Vercel serverless proxy ([brazeREST.mdc](.cursor/rules/braze/brazeREST.mdc))
 
-- Add `api/braze/user-data` (or Vercel `api/` convention for your chosen structure): server-only `BRAZE_REST_API_KEY`, `BRAZE_INSTANCE_URL`; forward `users/export/ids` with `external_ids`; validate request includes `external_id` (from query); return JSON errors for 4xx/5xx/429.
+- Add `api/braze/user-data` (or Vercel `api/` convention for your chosen structure): server-only `BRAZE_REST_API_KEY`, `BRAZE_REST_API_URL`; forward `users/export/ids` with `external_ids`; validate request includes `external_id` (from query); return JSON errors for 4xx/5xx/429.
 
 ## 8. Polishing and quality
 
