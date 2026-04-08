@@ -1,3 +1,5 @@
+import siaLogoSmallUrl from '../images/sia-logo-small.png';
+
 /**
  * Dual-level SIA-style header and marketing footer.
  * @param {{ activeView: string }} opts
@@ -25,8 +27,8 @@ export function renderShellHeader(opts) {
     </div>
     <div class="bg-white border-b border-sia-border">
       <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4 py-3">
-        <button type="button" id="sia-logo-btn" class="flex items-center gap-2 text-left font-display text-xl text-sia-navy tracking-tight" aria-label="Home">
-          <span class="font-semibold">Singapore Airlines</span>
+        <button type="button" id="sia-logo-btn" class="flex items-center gap-2 text-left" aria-label="Home">
+          <img src="${siaLogoSmallUrl}" alt="" width="160" height="40" class="h-9 w-auto max-w-[200px] object-contain object-left" />
         </button>
         <nav class="flex flex-wrap items-center gap-4 md:gap-8 text-sm" aria-label="Primary">
           <a href="#/home" data-route="HOME" class="${navCls('HOME')}">Book</a>
