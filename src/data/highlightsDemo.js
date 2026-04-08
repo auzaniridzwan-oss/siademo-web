@@ -8,7 +8,7 @@ export const HIGHLIGHTS_DEMO_PROMOS = [
     title: 'Convert KrisFlyer miles to redeem $100 worth of rewards',
     description: 'Redeem groceries, rides and dining with 50% more value. T&Cs Apply.',
     imageUrl:
-      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop',
+      'https://www.singaporeair.com/content/dam/sia/web-assets/images/ppsclub-krisflyer/highlightsbanner/2026/april/Apr26_yuu_SAAHighlight_690x360.jpg',
     imageAlt: '',
     href: 'https://www.singaporeair.com',
     external: true,
@@ -20,7 +20,7 @@ export const HIGHLIGHTS_DEMO_PROMOS = [
     title: 'Turn your miles into extraordinary moments with KrisFlyer',
     description: 'Watch our new brand film now.',
     imageUrl:
-      'https://images.unsplash.com/photo-1540962351504-03099e0a754b?q=80&w=800&auto=format&fit=crop',
+      'https://www.singaporeair.com/content/dam/sia/web-assets/images/ppsclub-krisflyer/highlightsbanner/2026/january/KFBF_Highlights_Tile_Regular_690x360.jpg',
     imageAlt: '',
     href: '#/home',
     external: false,
@@ -33,7 +33,7 @@ export const HIGHLIGHTS_DEMO_PROMOS = [
     description:
       'Daily non-stop flights to the Western Sydney International Airport starting 23 Nov 2026.',
     imageUrl:
-      'https://images.unsplash.com/photo-1569629743807-3fe01cef7a8a?q=80&w=800&auto=format&fit=crop',
+      'https://www.singaporeair.com/content/dam/sia/web-assets/images/local/sg/sydney/WSI_airport_690x360.jpg',
     imageAlt: '',
     href: '#/home',
     external: false,
