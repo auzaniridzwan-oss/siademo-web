@@ -155,7 +155,13 @@ function render() {
     const cached = StorageManager.get('booking_last_results', null);
     const flights = Array.isArray(cached) ? cached : [];
     const summary = `${search.origin_code} → ${search.destination_code} · ${search.depart_date} – ${search.return_date}`;
-    main.innerHTML = renderSearchResults({ flights, searchSummary: summary });
+    const dateRangeLine = `${search.depart_date} – ${search.return_date}`;
+    main.innerHTML = renderSearchResults({
+      flights,
+      searchSummary: summary,
+      routeCodes: { origin_code: search.origin_code, destination_code: search.destination_code },
+      dateRangeLine,
+    });
   }
 }
 
@@ -567,8 +573,17 @@ function ensureSearchLoadingOverlay() {
   el.id = 'search-loading';
   el.className =
     'hidden fixed inset-0 z-[70] bg-white/70 flex items-center justify-center pointer-events-auto';
-  el.innerHTML =
-    '<p class="text-sia-navy font-medium text-lg px-4 text-center">Searching flights…</p>';
+  el.innerHTML = `
+    <div class="flex flex-col items-center gap-5 px-4">
+      <div class="relative flex h-24 w-24 items-center justify-center">
+        <div
+          class="absolute inset-0 rounded-full border-4 border-sia-border border-t-sia-gold border-r-transparent animate-spin"
+          aria-hidden="true"
+        ></div>
+        <i class="fa-solid fa-plane text-3xl text-sia-navy" aria-hidden="true"></i>
+      </div>
+      <p class="text-sia-navy font-medium text-lg text-center">Searching flights…</p>
+    </div>`;
   document.body.appendChild(el);
 }
 

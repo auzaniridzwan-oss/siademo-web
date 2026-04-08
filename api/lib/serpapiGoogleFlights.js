@@ -88,8 +88,8 @@ function calendarDayOffset(depDateKey, arrDateKey) {
 }
 
 /**
- * @param {{ flights: Array<{ departure_airport?: { time?: string, name?: string }, arrival_airport?: { time?: string, name?: string }, flight_number?: string, airplane?: string }>, price?: number, total_duration?: number }} itinerary
- * @returns {{ price: number, currency: string, totalDurationMinutes: number, durationLabel: string, departureTime: string, arrivalTime: string, flightNumbers: string[], id: string, originAirportName: string, destinationAirportName: string, aircraft: string, arrivalDayOffset: number } | null}
+ * @param {{ flights: Array<{ departure_airport?: { time?: string, name?: string, id?: string }, arrival_airport?: { time?: string, name?: string, id?: string }, flight_number?: string, airplane?: string }>, price?: number, total_duration?: number }} itinerary
+ * @returns {{ price: number, currency: string, totalDurationMinutes: number, durationLabel: string, departureTime: string, arrivalTime: string, flightNumbers: string[], id: string, originAirportName: string, destinationAirportName: string, originAirportCode: string, destinationAirportCode: string, aircraft: string, arrivalDayOffset: number } | null}
  */
 export function normalizeItinerary(itinerary) {
   const legs = itinerary.flights;
@@ -112,6 +112,12 @@ export function normalizeItinerary(itinerary) {
 
   const originAirportName = String(first?.departure_airport?.name || '').trim();
   const destinationAirportName = String(last?.arrival_airport?.name || '').trim();
+  const originAirportCode = String(first?.departure_airport?.id || '')
+    .trim()
+    .toUpperCase();
+  const destinationAirportCode = String(last?.arrival_airport?.id || '')
+    .trim()
+    .toUpperCase();
 
   /** @type {string[]} */
   const aircraftOrdered = [];
@@ -140,6 +146,8 @@ export function normalizeItinerary(itinerary) {
     id,
     originAirportName,
     destinationAirportName,
+    originAirportCode,
+    destinationAirportCode,
     aircraft,
     arrivalDayOffset,
   };

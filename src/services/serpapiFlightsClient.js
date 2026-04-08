@@ -16,8 +16,8 @@ function formatDurationLabel(totalMinutes) {
 
 /**
  * Maps SerpAPI-normalized itineraries to `searchResults` flight row shape.
- * @param {Array<{ id: string, price: number, currency?: string, durationLabel?: string, totalDurationMinutes?: number, departureTime: string, arrivalTime: string, flightNumbers: string[], originAirportName?: string, destinationAirportName?: string, aircraft?: string, arrivalDayOffset?: number }>} itineraries
- * @returns {Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName: string, destinationAirportName: string, aircraft: string, arrivalDayOffset: number }>}
+ * @param {Array<{ id: string, price: number, currency?: string, durationLabel?: string, totalDurationMinutes?: number, departureTime: string, arrivalTime: string, flightNumbers: string[], originAirportName?: string, destinationAirportName?: string, originAirportCode?: string, destinationAirportCode?: string, aircraft?: string, arrivalDayOffset?: number }>} itineraries
+ * @returns {Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName: string, destinationAirportName: string, originAirportCode: string, destinationAirportCode: string, aircraft: string, arrivalDayOffset: number }>}
  */
 export function mapItinerariesToResultRows(itineraries) {
   return itineraries.map((it) => {
@@ -43,6 +43,8 @@ export function mapItinerariesToResultRows(itineraries) {
       prices,
       originAirportName: String(it.originAirportName || '').trim(),
       destinationAirportName: String(it.destinationAirportName || '').trim(),
+      originAirportCode: String(it.originAirportCode || '').trim().toUpperCase(),
+      destinationAirportCode: String(it.destinationAirportCode || '').trim().toUpperCase(),
       aircraft: String(it.aircraft || '').trim(),
       arrivalDayOffset,
     };

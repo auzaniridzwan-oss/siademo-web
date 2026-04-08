@@ -11,11 +11,38 @@ function arrivalDaySuffix(offset) {
 }
 
 /**
- * @param {{ flights: Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName?: string, destinationAirportName?: string, aircraft?: string, arrivalDayOffset?: number }>, searchSummary?: string }} data
+ * Whole SGD amounts with thousands separators (no cents).
+ * @param {number} amount
+ * @returns {string}
+ */
+function formatSgdWhole(amount) {
+  const n = Math.round(amount);
+  return `SGD ${n.toLocaleString('en-SG', { maximumFractionDigits: 0 })}`;
+}
+
+/**
+ * @param {{ origin_code?: string, destination_code?: string } | null | undefined} routeCodes
+ * @param {{ originAirportCode?: string, destinationAirportCode?: string }} f
+ * @returns {{ o: string, d: string }}
+ */
+function resolveRouteCodes(routeCodes, f) {
+  const o =
+    (f.originAirportCode && String(f.originAirportCode).trim()) ||
+    (routeCodes?.origin_code && String(routeCodes.origin_code).trim()) ||
+    '';
+  const d =
+    (f.destinationAirportCode && String(f.destinationAirportCode).trim()) ||
+    (routeCodes?.destination_code && String(routeCodes.destination_code).trim()) ||
+    '';
+  return { o, d };
+}
+
+/**
+ * @param {{ flights: Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName?: string, destinationAirportName?: string, originAirportCode?: string, destinationAirportCode?: string, aircraft?: string, arrivalDayOffset?: number }>, searchSummary?: string, routeCodes?: { origin_code: string, destination_code: string }, dateRangeLine?: string }} data
  * @returns {string}
  */
 export function renderSearchResults(data) {
-  const { flights, searchSummary } = data;
+  const { flights, searchSummary, routeCodes, dateRangeLine } = data;
 
   const steps = ['Flights', 'Passengers', 'Review', 'Payment'];
   const stepper = `
@@ -42,13 +69,16 @@ export function renderSearchResults(data) {
   }
 
   const f0 = flights[0];
+  const headerCodes = resolveRouteCodes(routeCodes, f0);
   const pageRouteLine =
-    f0?.originAirportName && f0?.destinationAirportName
-      ? `<p class="text-center font-bold text-lg text-sia-navy">${f0.originAirportName} → ${f0.destinationAirportName}</p>`
+    headerCodes.o && headerCodes.d
+      ? `<p class="text-center font-bold text-lg text-sia-navy">${headerCodes.o} → ${headerCodes.d}</p>`
       : '';
-  const pageSubtitle = searchSummary
-    ? `<p class="text-center text-sm text-sia-text-muted mt-1">${searchSummary}</p>`
-    : '';
+  const pageSubtitle = dateRangeLine
+    ? `<p class="text-center text-sm text-sia-text-muted mt-1">${dateRangeLine}</p>`
+    : searchSummary
+      ? `<p class="text-center text-sm text-sia-text-muted mt-1">${searchSummary}</p>`
+      : '';
   const pageHeaderBlock =
     pageRouteLine || pageSubtitle
       ? `<div class="mb-6">${pageRouteLine}${pageSubtitle}</div>`
@@ -59,9 +89,9 @@ export function renderSearchResults(data) {
       const cells = FARE_BUCKETS.map((bucket, i) => {
         const p = f.prices[i];
         if (p == null) {
-          return `<td class="px-2 py-3 text-center border-l border-sia-border text-sia-text-muted text-xs">Sold out</td>`;
+          return `<td class="px-2 py-3 text-center border-l border-sia-border text-sia-text-muted text-xs first:border-l-0">Sold out</td>`;
         }
-        return `<td class="px-2 py-3 text-center border-l border-sia-border"><span class="text-sia-gold font-semibold">S$ ${p.toFixed(0)}</span><span class="block text-[0.65rem] text-sia-text-muted">Seats</span></td>`;
+        return `<td class="px-2 py-3 text-center border-l border-sia-border first:border-l-0"><span class="text-sia-gold font-semibold">${formatSgdWhole(p)}</span><span class="block text-[0.65rem] text-sia-text-muted">Seats</span></td>`;
       }).join('');
 
       const offset =
@@ -70,9 +100,10 @@ export function renderSearchResults(data) {
           : 0;
       const arrSuffix = arrivalDaySuffix(offset);
 
+      const { o: oc, d: dc } = resolveRouteCodes(routeCodes, f);
       const cardRouteHeader =
-        f.originAirportName && f.destinationAirportName
-          ? `<p class="text-center font-bold text-base text-sia-navy mb-3">${f.originAirportName} → ${f.destinationAirportName}</p>`
+        oc && dc
+          ? `<p class="text-center font-bold text-base text-sia-navy mb-3">${oc} → ${dc}</p>`
           : '';
 
       const aircraftLine = f.aircraft && String(f.aircraft).trim() ? f.aircraft : '—';
@@ -82,24 +113,23 @@ export function renderSearchResults(data) {
         <div class="grid grid-cols-1 md:grid-cols-12 gap-0">
           <div class="md:col-span-4 p-4 md:p-6 bg-sia-muted/40 border-b md:border-b-0 md:border-r border-sia-border">
             ${cardRouteHeader}
-            <div class="grid grid-cols-2 gap-2 items-baseline text-xl font-semibold text-sia-navy">
+            <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center text-xl font-semibold text-sia-navy">
               <p class="text-center m-0">${f.departureTime}</p>
+              <span class="flex justify-center text-sia-text-muted" aria-hidden="true"><i class="fa-solid fa-arrow-right text-base"></i></span>
               <p class="text-center m-0">${f.arrivalTime}${arrSuffix}</p>
             </div>
             <p class="text-center text-sm mt-2 text-sia-navy">${f.duration}</p>
             <p class="text-center text-xs text-sia-text-muted mt-3">${f.flightNumber} · ${aircraftLine}</p>
           </div>
           <div class="md:col-span-8 overflow-x-auto">
-            <table class="w-full text-sm min-w-[320px]">
+            <table class="w-full text-sm min-w-[280px]">
               <thead>
                 <tr class="bg-sia-navy text-white">
-                  <th class="px-2 py-2 text-left font-medium"></th>
-                  ${FARE_BUCKETS.map((b) => `<th class="px-2 py-2 text-center font-normal text-xs border-l border-white/20">${b}</th>`).join('')}
+                  ${FARE_BUCKETS.map((b) => `<th class="px-2 py-2 text-center font-normal text-xs ${b !== 'Lite' ? 'border-l border-white/20' : ''}">${b}</th>`).join('')}
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="px-2 py-3 text-sia-text-muted text-xs">Fare</td>
                   ${cells}
                 </tr>
               </tbody>
