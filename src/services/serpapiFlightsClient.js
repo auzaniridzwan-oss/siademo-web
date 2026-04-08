@@ -16,8 +16,8 @@ function formatDurationLabel(totalMinutes) {
 
 /**
  * Maps SerpAPI-normalized itineraries to `searchResults` flight row shape.
- * @param {Array<{ id: string, price: number, currency?: string, durationLabel?: string, totalDurationMinutes?: number, departureTime: string, arrivalTime: string, flightNumbers: string[] }>} itineraries
- * @returns {Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[] }>}
+ * @param {Array<{ id: string, price: number, currency?: string, durationLabel?: string, totalDurationMinutes?: number, departureTime: string, arrivalTime: string, flightNumbers: string[], originAirportName?: string, destinationAirportName?: string, aircraft?: string, arrivalDayOffset?: number }>} itineraries
+ * @returns {Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName: string, destinationAirportName: string, aircraft: string, arrivalDayOffset: number }>}
  */
 export function mapItinerariesToResultRows(itineraries) {
   return itineraries.map((it) => {
@@ -30,6 +30,10 @@ export function mapItinerariesToResultRows(itineraries) {
     /** @type {(number|null)[]} */
     const prices = [null, null, null, null];
     prices[VALUE_FARE_INDEX] = it.price;
+    const arrivalDayOffset =
+      typeof it.arrivalDayOffset === 'number' && Number.isFinite(it.arrivalDayOffset)
+        ? Math.max(0, Math.floor(it.arrivalDayOffset))
+        : 0;
     return {
       id: it.id,
       flightNumber: it.flightNumbers.length ? it.flightNumbers.join(' / ') : 'SQ',
@@ -37,6 +41,10 @@ export function mapItinerariesToResultRows(itineraries) {
       arrivalTime: it.arrivalTime,
       duration,
       prices,
+      originAirportName: String(it.originAirportName || '').trim(),
+      destinationAirportName: String(it.destinationAirportName || '').trim(),
+      aircraft: String(it.aircraft || '').trim(),
+      arrivalDayOffset,
     };
   });
 }

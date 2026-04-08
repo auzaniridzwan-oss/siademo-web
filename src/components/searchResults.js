@@ -1,7 +1,17 @@
 import { FARE_BUCKETS } from '../data/flights.js';
 
 /**
- * @param {{ flights: Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[] }>, searchSummary?: string }} data
+ * @param {number} offset
+ * @returns {string}
+ */
+function arrivalDaySuffix(offset) {
+  if (offset <= 0) return '';
+  if (offset === 1) return ' (+1 day)';
+  return ` (+${offset} days)`;
+}
+
+/**
+ * @param {{ flights: Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName?: string, destinationAirportName?: string, aircraft?: string, arrivalDayOffset?: number }>, searchSummary?: string }} data
  * @returns {string}
  */
 export function renderSearchResults(data) {
@@ -31,6 +41,19 @@ export function renderSearchResults(data) {
     </section>`;
   }
 
+  const f0 = flights[0];
+  const pageRouteLine =
+    f0?.originAirportName && f0?.destinationAirportName
+      ? `<p class="text-center font-bold text-lg text-sia-navy">${f0.originAirportName} → ${f0.destinationAirportName}</p>`
+      : '';
+  const pageSubtitle = searchSummary
+    ? `<p class="text-center text-sm text-sia-text-muted mt-1">${searchSummary}</p>`
+    : '';
+  const pageHeaderBlock =
+    pageRouteLine || pageSubtitle
+      ? `<div class="mb-6">${pageRouteLine}${pageSubtitle}</div>`
+      : '';
+
   const cards = flights
     .map((f) => {
       const cells = FARE_BUCKETS.map((bucket, i) => {
@@ -40,14 +63,31 @@ export function renderSearchResults(data) {
         }
         return `<td class="px-2 py-3 text-center border-l border-sia-border"><span class="text-sia-gold font-semibold">S$ ${p.toFixed(0)}</span><span class="block text-[0.65rem] text-sia-text-muted">Seats</span></td>`;
       }).join('');
+
+      const offset =
+        typeof f.arrivalDayOffset === 'number' && Number.isFinite(f.arrivalDayOffset)
+          ? Math.max(0, Math.floor(f.arrivalDayOffset))
+          : 0;
+      const arrSuffix = arrivalDaySuffix(offset);
+
+      const cardRouteHeader =
+        f.originAirportName && f.destinationAirportName
+          ? `<p class="text-center font-bold text-base text-sia-navy mb-3">${f.originAirportName} → ${f.destinationAirportName}</p>`
+          : '';
+
+      const aircraftLine = f.aircraft && String(f.aircraft).trim() ? f.aircraft : '—';
+
       return `
       <article class="bg-white border border-sia-border rounded-sm shadow-sm mb-4 overflow-hidden">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-0">
           <div class="md:col-span-4 p-4 md:p-6 bg-sia-muted/40 border-b md:border-b-0 md:border-r border-sia-border">
-            <p class="text-2xl font-semibold text-sia-navy">${f.departureTime}</p>
-            <p class="text-sia-text-muted text-sm">to ${f.arrivalTime}</p>
-            <p class="text-sm mt-2">${f.duration}</p>
-            <p class="text-xs text-sia-text-muted mt-2">Flight ${f.flightNumber}</p>
+            ${cardRouteHeader}
+            <div class="grid grid-cols-2 gap-2 items-baseline text-xl font-semibold text-sia-navy">
+              <p class="text-center m-0">${f.departureTime}</p>
+              <p class="text-center m-0">${f.arrivalTime}${arrSuffix}</p>
+            </div>
+            <p class="text-center text-sm mt-2 text-sia-navy">${f.duration}</p>
+            <p class="text-center text-xs text-sia-text-muted mt-3">${f.flightNumber} · ${aircraftLine}</p>
           </div>
           <div class="md:col-span-8 overflow-x-auto">
             <table class="w-full text-sm min-w-[320px]">
@@ -74,7 +114,7 @@ export function renderSearchResults(data) {
   <section class="bg-sia-tan py-10 flex-1 fade-view">
     <div class="max-w-7xl mx-auto px-4">
       ${stepper}
-      ${searchSummary ? `<p class="text-sm text-sia-text-muted mb-6">${searchSummary}</p>` : ''}
+      ${pageHeaderBlock}
       <div class="space-y-4">${cards}</div>
     </div>
   </section>`;

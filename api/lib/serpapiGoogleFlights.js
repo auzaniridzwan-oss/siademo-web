@@ -64,8 +64,32 @@ export function extractClock(serpTime) {
 }
 
 /**
- * @param {{ flights: Array<{ departure_airport?: { time?: string }, arrival_airport?: { time?: string }, flight_number?: string }>, price?: number, total_duration?: number }} itinerary
- * @returns {{ price: number, currency: string, totalDurationMinutes: number, durationLabel: string, departureTime: string, arrivalTime: string, flightNumbers: string[], id: string } | null}
+ * "2026-04-08 15:10" -> "2026-04-08" for calendar-day comparison.
+ * @param {string} serpTime
+ * @returns {string|null}
+ */
+export function extractDateKey(serpTime) {
+  const s = String(serpTime || '').trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+}
+
+/**
+ * @param {string|null} depDateKey
+ * @param {string|null} arrDateKey
+ * @returns {number}
+ */
+function calendarDayOffset(depDateKey, arrDateKey) {
+  if (!depDateKey || !arrDateKey) return 0;
+  const t0 = Date.parse(`${depDateKey}T00:00:00Z`);
+  const t1 = Date.parse(`${arrDateKey}T00:00:00Z`);
+  if (!Number.isFinite(t0) || !Number.isFinite(t1)) return 0;
+  return Math.max(0, Math.round((t1 - t0) / 86400000));
+}
+
+/**
+ * @param {{ flights: Array<{ departure_airport?: { time?: string, name?: string }, arrival_airport?: { time?: string, name?: string }, flight_number?: string, airplane?: string }>, price?: number, total_duration?: number }} itinerary
+ * @returns {{ price: number, currency: string, totalDurationMinutes: number, durationLabel: string, departureTime: string, arrivalTime: string, flightNumbers: string[], id: string, originAirportName: string, destinationAirportName: string, aircraft: string, arrivalDayOffset: number } | null}
  */
 export function normalizeItinerary(itinerary) {
   const legs = itinerary.flights;
@@ -86,6 +110,25 @@ export function normalizeItinerary(itinerary) {
       ? itinerary.total_duration
       : 0;
 
+  const originAirportName = String(first?.departure_airport?.name || '').trim();
+  const destinationAirportName = String(last?.arrival_airport?.name || '').trim();
+
+  /** @type {string[]} */
+  const aircraftOrdered = [];
+  const seenAircraft = new Set();
+  for (const leg of legs) {
+    const a = String(/** @type {{ airplane?: string }} */ (leg).airplane || '').trim();
+    if (a && !seenAircraft.has(a)) {
+      seenAircraft.add(a);
+      aircraftOrdered.push(a);
+    }
+  }
+  const aircraft = aircraftOrdered.join(' · ');
+
+  const depKey = extractDateKey(String(dep));
+  const arrKey = extractDateKey(String(arr));
+  const arrivalDayOffset = calendarDayOffset(depKey, arrKey);
+
   return {
     price,
     currency: SERPAPI_CURRENCY,
@@ -95,6 +138,10 @@ export function normalizeItinerary(itinerary) {
     arrivalTime: extractClock(String(arr)),
     flightNumbers,
     id,
+    originAirportName,
+    destinationAirportName,
+    aircraft,
+    arrivalDayOffset,
   };
 }
 

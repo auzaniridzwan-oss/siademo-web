@@ -7,7 +7,7 @@ export const DESTINATION_OPTIONS = [
   { label: 'Sydney (SYD)', code: 'SYD' },
 ];
 
-/** @type {Record<string, Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[] }>>} */
+/** @type {Record<string, Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName: string, destinationAirportName: string, aircraft: string, arrivalDayOffset: number }>>} */
 export const FLIGHT_DATA = {
   NRT: [
     {
@@ -17,6 +17,10 @@ export const FLIGHT_DATA = {
       arrivalTime: '08:55',
       duration: '8h 5m',
       prices: [null, 1070.9, 1260.9, 1590.9],
+      originAirportName: 'Singapore Changi Airport',
+      destinationAirportName: 'Narita International Airport',
+      aircraft: 'Airbus A350-900',
+      arrivalDayOffset: 0,
     },
     {
       id: 'SQ638',
@@ -25,6 +29,10 @@ export const FLIGHT_DATA = {
       arrivalTime: '08:00',
       duration: '8h 5m',
       prices: [null, null, 1250.9, 1590.9],
+      originAirportName: 'Singapore Changi Airport',
+      destinationAirportName: 'Narita International Airport',
+      aircraft: 'Boeing 787-10',
+      arrivalDayOffset: 1,
     },
   ],
   LHR: [
@@ -35,6 +43,10 @@ export const FLIGHT_DATA = {
       arrivalTime: '15:40',
       duration: '14h 40m',
       prices: [950.0, 1100.0, 1400.0, 1800.0],
+      originAirportName: 'Singapore Changi Airport',
+      destinationAirportName: 'London Heathrow Airport',
+      aircraft: 'Airbus A380-800',
+      arrivalDayOffset: 0,
     },
   ],
   SYD: [
@@ -45,6 +57,10 @@ export const FLIGHT_DATA = {
       arrivalTime: '11:50',
       duration: '8h 5m',
       prices: [750.0, 890.0, 1100.0, 1350.0],
+      originAirportName: 'Singapore Changi Airport',
+      destinationAirportName: 'Sydney Kingsford Smith Airport',
+      aircraft: 'Airbus A350-900',
+      arrivalDayOffset: 0,
     },
   ],
 };
