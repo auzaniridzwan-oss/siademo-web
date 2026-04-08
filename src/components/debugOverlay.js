@@ -11,6 +11,10 @@ export function renderDebugOverlay() {
       </button>
     </div>
     <button type="button" id="debug-refresh-profile" class="mb-3 text-xs px-2 py-1 border border-sia-border rounded-sm hover:bg-sia-muted w-full">Refresh profile (REST)</button>
+    <div class="mb-3 pb-3 border-b border-sia-border">
+      <button type="button" id="debug-reset-app" class="mb-1.5 text-xs px-2 py-1 border border-red-200 text-red-800 bg-red-50 rounded-sm hover:bg-red-100 w-full">Reset app</button>
+      <p class="text-[0.65rem] text-sia-text-muted leading-snug">Logs out, clears all local storage for this site, and reloads.</p>
+    </div>
     <div class="mb-3 pt-2 border-t border-sia-border space-y-2">
       <p id="debug-launcher-url-note" class="hidden text-xs text-sia-text-muted">URL <code class="text-[0.65rem]">?debug=true</code>: floating button always shown.</p>
       <button type="button" id="debug-hide-launcher" class="hidden text-xs px-2 py-1 border border-sia-border rounded-sm hover:bg-sia-muted w-full">Hide floating debug button</button>

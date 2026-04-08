@@ -512,6 +512,23 @@ function bindDebugOverlay() {
 
   document.getElementById('debug-refresh-profile')?.addEventListener('click', () => refreshDebugPanels());
 
+  document.getElementById('debug-reset-app')?.addEventListener('click', () => {
+    if (
+      !window.confirm(
+        'Reset the app? This logs you out, clears all local storage for this site, and reloads the page.',
+      )
+    ) {
+      return;
+    }
+    BrazeManager.wipeLocalSdkData();
+    try {
+      localStorage.clear();
+    } catch (e) {
+      AppLogger.warn('[STORAGE]', 'localStorage.clear failed', e);
+    }
+    location.reload();
+  });
+
   applyDebugLauncherVisibility();
 }
 

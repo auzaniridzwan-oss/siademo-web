@@ -110,6 +110,20 @@ class BrazeManagerClass {
   }
 
   /**
+   * Clears Braze SDK persisted identity and device data for this origin (e.g. debug full reset).
+   * @returns {void}
+   */
+  wipeLocalSdkData() {
+    try {
+      if (typeof braze.wipeData === 'function') {
+        braze.wipeData();
+      }
+    } catch (e) {
+      AppLogger.warn('[SDK]', 'Braze wipeData failed', e);
+    }
+  }
+
+  /**
    * @param {string} key
    * @param {string|number|boolean} value
    * @returns {void}
