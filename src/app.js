@@ -1,5 +1,6 @@
 import { renderShellFooter, renderShellHeader } from './components/shell.js';
 import { renderHomeBooking } from './components/homeBooking.js';
+import { createHighlightsSection, renderHighlightsSection } from './components/highlightsSection.js';
 import { renderSearchResults } from './components/searchResults.js';
 import { renderRegistrationModal, isValidEmail, validateSgPhone } from './components/registrationModal.js';
 import { renderDebugOverlay } from './components/debugOverlay.js';
@@ -21,6 +22,9 @@ let pendingSearchPayload = null;
 
 /** @type {(() => void) | null} */
 let unsubBrazeEvents = null;
+
+/** @type {ReturnType<typeof createHighlightsSection> | null} */
+let highlightsController = null;
 
 /**
  * @returns {'HOME'|'SEARCH_RESULTS'}
@@ -82,14 +86,14 @@ function render() {
             defaultReturn: saved.return_date,
           }
         : {};
-    main.innerHTML = renderHomeBooking(persisted);
+    main.innerHTML = `${renderHomeBooking(persisted)}${renderHighlightsSection()}`;
   } else {
     const search = StorageManager.get('booking_search', null);
     if (!isValidBookingSearch(search)) {
       AppLogger.warn('[UI]', 'Invalid booking_search on results route — redirecting home');
       currentView = VIEWS.HOME;
       history.replaceState(null, '', `${location.pathname}${location.search}#/home`);
-      main.innerHTML = renderHomeBooking({});
+      main.innerHTML = `${renderHomeBooking({})}${renderHighlightsSection()}`;
       return;
     }
     const cached = StorageManager.get('booking_last_results', null);
@@ -145,6 +149,11 @@ async function runSearchAfterAuth(payload) {
  * @returns {void}
  */
 function bindAfterRender() {
+  if (highlightsController) {
+    highlightsController.dispose();
+    highlightsController = null;
+  }
+
   document.getElementById('sia-logo-btn')?.addEventListener('click', () => navigate(VIEWS.HOME));
 
   document.querySelectorAll('[data-route]').forEach((a) => {
@@ -198,6 +207,11 @@ function bindAfterRender() {
     tabManage?.addEventListener('click', () => setTab('oth'));
     tabCheck?.addEventListener('click', () => setTab('oth'));
     tabStatus?.addEventListener('click', () => setTab('oth'));
+
+    const highlightsMount = document.getElementById('highlights-cards');
+    if (highlightsMount) {
+      highlightsController = createHighlightsSection(highlightsMount);
+    }
 
     document.getElementById('search-flights-btn')?.addEventListener('click', () => {
       const tripEl = document.querySelector('input[name="trip_type"]:checked');

@@ -78,8 +78,8 @@ class BrazeManagerClass {
           AppLogger.debug('[SDK]', 'subscribeToInAppMessage unavailable', e);
         }
         try {
-          braze.subscribeToContentCardsUpdates(() => {
-            this.notify(CONTENT_CARDS_UPDATED, { at: Date.now() });
+          braze.subscribeToContentCardsUpdates((contentCards) => {
+            this.notify(CONTENT_CARDS_UPDATED, { at: Date.now(), contentCards });
           });
         } catch (e) {
           AppLogger.debug('[SDK]', 'subscribeToContentCardsUpdates unavailable', e);
@@ -209,6 +209,117 @@ class BrazeManagerClass {
    */
   broadcastContentPatch(patch) {
     this.notify('HERO_CONTENT', patch);
+  }
+
+  /**
+   * Latest Content Cards collection from the Web SDK cache (after subscribe refresh).
+   * @returns {import('@braze/web-sdk').ContentCards | undefined}
+   */
+  getLatestContentCards() {
+    try {
+      return braze.getCachedContentCards?.();
+    } catch (e) {
+      AppLogger.debug('[SDK]', 'getCachedContentCards unavailable', e);
+      return undefined;
+    }
+  }
+
+  /**
+   * Maps Braze Content Cards to Highlights promo rows (Captioned Image, Classic, Image Only).
+   * Skips control, dismissed, and expired cards. Caps at 20 for stack processing.
+   * @param {import('@braze/web-sdk').ContentCards | undefined | null} contentCards
+   * @returns {import('../components/highlightsSection.js').HighlightPromo[]}
+   */
+  getHighlightPromosFromContentCards(contentCards) {
+    if (!contentCards?.cards || !Array.isArray(contentCards.cards)) {
+      return [];
+    }
+    const now = Date.now();
+    const out = [];
+    for (const card of contentCards.cards) {
+      if (out.length >= 20) break;
+      if (card instanceof braze.ControlCard) continue;
+      if (card.dismissed) continue;
+      const ex = card.expiresAt;
+      if (ex && new Date(ex).getTime() < now) continue;
+
+      /** @type {import('../components/highlightsSection.js').HighlightPromo | null} */
+      let row = null;
+      if (card instanceof braze.CaptionedImage || card instanceof braze.ClassicCard) {
+        const title = card.title?.trim() || 'Offer';
+        const description = typeof card.description === 'string' ? card.description : '';
+        const imageUrl = card.imageUrl?.trim() || '';
+        if (!imageUrl && !title) continue;
+        row = {
+          id: card.id || `braze-${out.length}`,
+          title,
+          description,
+          imageUrl: imageUrl || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
+          imageAlt: card.altImageText?.trim() || '',
+          href: card.url?.trim() || undefined,
+          external: isExternalUrl(card.url),
+          expiresAt: card.expiresAt ? new Date(card.expiresAt) : null,
+          source: 'braze',
+          brazeCard: card,
+        };
+      } else if (card instanceof braze.ImageOnly) {
+        const imageUrl = card.imageUrl?.trim();
+        if (!imageUrl) continue;
+        row = {
+          id: card.id || `braze-img-${out.length}`,
+          title: card.altImageText?.trim() || 'Offer',
+          description: '',
+          imageUrl,
+          imageAlt: card.altImageText?.trim() || '',
+          href: card.url?.trim() || undefined,
+          external: isExternalUrl(card.url),
+          expiresAt: card.expiresAt ? new Date(card.expiresAt) : null,
+          source: 'braze',
+          brazeCard: card,
+        };
+      }
+      if (row) out.push(row);
+    }
+    return out;
+  }
+
+  /**
+   * @param {import('@braze/web-sdk').Card[]} cards
+   * @returns {void}
+   */
+  logHighlightContentCardImpressions(cards) {
+    if (!cards.length) return;
+    try {
+      braze.logContentCardImpressions?.(cards);
+    } catch (e) {
+      AppLogger.debug('[SDK]', 'logContentCardImpressions failed', e);
+    }
+  }
+
+  /**
+   * @param {import('@braze/web-sdk').Card} card
+   * @returns {void}
+   */
+  logHighlightContentCardClick(card) {
+    try {
+      braze.logContentCardClick?.(card);
+    } catch (e) {
+      AppLogger.debug('[SDK]', 'logContentCardClick failed', e);
+    }
+  }
+}
+
+/**
+ * @param {string | undefined | null} url
+ * @returns {boolean}
+ */
+function isExternalUrl(url) {
+  if (!url || !/^https?:\/\//i.test(url)) return false;
+  try {
+    const u = new URL(url);
+    return u.origin !== window.location.origin;
+  } catch {
+    return true;
   }
 }
 
