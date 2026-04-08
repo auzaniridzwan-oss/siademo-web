@@ -2,6 +2,10 @@ import { defineConfig } from 'vite';
 
 /** @see README — run `vercel dev` on port 3000 for local `/api`, or rely on preview/prod deploy */
 export default defineConfig({
+  /** Braze Web SDK: pre-bundling can reorder declarations so subclass appears before base (e.g. HtmlMessage before InAppMessage). */
+  optimizeDeps: {
+    exclude: ['@braze/web-sdk'],
+  },
   server: {
     proxy: {
       '/api': {

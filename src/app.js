@@ -100,12 +100,13 @@ function render() {
 }
 
 /**
+ * Flowbite 2.x: use `new Modal(...)` (default instance options override by id after re-renders). There is no `Modal.getInstance(element)`.
  * @returns {InstanceType<typeof Modal> | null}
  */
 function getRegistrationModalInstance() {
   const el = document.getElementById('registration-modal');
   if (!el) return null;
-  return Modal.getInstance(el) || new Modal(el, { backdrop: 'dynamic', closable: true });
+  return new Modal(el, { backdrop: 'dynamic', closable: true });
 }
 
 function openRegistrationModal() {
