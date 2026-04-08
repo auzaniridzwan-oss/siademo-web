@@ -3,6 +3,7 @@ import { renderHomeBooking } from './components/homeBooking.js';
 import { createHighlightsSection, renderHighlightsSection } from './components/highlightsSection.js';
 import { renderSearchResults } from './components/searchResults.js';
 import { renderRegistrationModal, isValidEmail, validateSgPhone } from './components/registrationModal.js';
+import { renderLoginModal } from './components/loginModal.js';
 import { renderDebugOverlay } from './components/debugOverlay.js';
 import { FLIGHT_DATA } from './data/flights.js';
 import { buildBookingPayload, isValidBookingSearch } from './logic/bookingPayload.js';
@@ -25,6 +26,59 @@ let unsubBrazeEvents = null;
 
 /** @type {ReturnType<typeof createHighlightsSection> | null} */
 let highlightsController = null;
+
+/**
+ * @returns {boolean}
+ */
+function isDebugUrl() {
+  return new URLSearchParams(location.search).get('debug') === 'true';
+}
+
+/**
+ * @returns {boolean}
+ */
+function hasLoggedInUserId() {
+  const id = StorageManager.get('user_id', null);
+  return typeof id === 'string' && id.trim().length > 0;
+}
+
+/**
+ * @returns {boolean}
+ */
+function isDebugOverlayEligible() {
+  return isDebugUrl() || hasLoggedInUserId();
+}
+
+/**
+ * @returns {boolean}
+ */
+function isDebugLauncherHiddenPersisted() {
+  return !!StorageManager.get('debug_launcher_hidden', false);
+}
+
+/**
+ * Syncs floating Debug button, header recovery link, and drawer launcher controls.
+ * @returns {void}
+ */
+function applyDebugLauncherVisibility() {
+  const trigger = document.getElementById('debug-drawer-trigger');
+  const recovery = document.getElementById('debug-launcher-recovery');
+  const urlDebug = isDebugUrl();
+  const eligible = isDebugOverlayEligible();
+  const hidden = isDebugLauncherHiddenPersisted();
+  const showFab = eligible && (urlDebug || !hidden);
+
+  trigger?.classList.toggle('hidden', !showFab);
+  recovery?.classList.toggle('hidden', !(eligible && hidden && !urlDebug));
+
+  const note = document.getElementById('debug-launcher-url-note');
+  const btnHide = document.getElementById('debug-hide-launcher');
+  const btnShow = document.getElementById('debug-show-launcher');
+  note?.classList.toggle('hidden', !(urlDebug && eligible));
+  const showHideBtn = eligible && !urlDebug && !hidden;
+  btnHide?.classList.toggle('hidden', !showHideBtn);
+  btnShow?.classList.toggle('hidden', !(eligible && !urlDebug && hidden));
+}
 
 /**
  * @returns {'HOME'|'SEARCH_RESULTS'}
@@ -63,14 +117,15 @@ function render() {
   const app = document.getElementById('app');
   if (!app) return;
 
-  const debugOn = new URLSearchParams(location.search).get('debug') === 'true';
+  const showDebugOverlay = isDebugOverlayEligible();
 
   app.innerHTML = `
     ${renderShellHeader({ activeView: currentView })}
     <main id="main-view" class="flex flex-col min-h-[40vh]"></main>
     ${renderShellFooter()}
     ${renderRegistrationModal()}
-    ${debugOn ? renderDebugOverlay() : ''}
+    ${renderLoginModal()}
+    ${showDebugOverlay ? renderDebugOverlay() : ''}
   `;
 
   const main = document.getElementById('main-view');
@@ -119,6 +174,23 @@ function openRegistrationModal() {
 
 function closeRegistrationModal() {
   getRegistrationModalInstance()?.hide();
+}
+
+/**
+ * @returns {InstanceType<typeof Modal> | null}
+ */
+function getLoginModalInstance() {
+  const el = document.getElementById('login-modal');
+  if (!el) return null;
+  return new Modal(el, { backdrop: 'dynamic', closable: true });
+}
+
+function openLoginModal() {
+  getLoginModalInstance()?.show();
+}
+
+function closeLoginModal() {
+  getLoginModalInstance()?.hide();
 }
 
 /**
@@ -174,6 +246,16 @@ function bindAfterRender() {
 
   document.querySelectorAll('[data-nav="utility"], [data-nav="decor"]').forEach((el) => {
     el.addEventListener('click', (e) => e.preventDefault());
+  });
+
+  document.getElementById('header-login-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    openLoginModal();
+  });
+
+  document.getElementById('debug-launcher-recovery')?.addEventListener('click', () => {
+    StorageManager.set('debug_launcher_hidden', false);
+    applyDebugLauncherVisibility();
   });
 
   if (currentView === VIEWS.HOME) {
@@ -249,6 +331,7 @@ function bindAfterRender() {
   }
 
   bindRegistrationForm();
+  bindLoginForm();
   bindDebugOverlay();
 }
 
@@ -330,22 +413,87 @@ function bindRegistrationForm() {
     pendingSearchPayload = null;
     if (resume) {
       runSearchAfterAuth(resume);
+    } else {
+      render();
+      bindAfterRender();
     }
   });
 }
 
+function bindLoginForm() {
+  const form = document.getElementById('login-form');
+  if (!form) return;
+
+  const showErr = (id, msg) => {
+    const p = document.getElementById(id);
+    if (!p) return;
+    if (msg) {
+      p.textContent = msg;
+      p.classList.remove('hidden');
+    } else {
+      p.textContent = '';
+      p.classList.add('hidden');
+    }
+  };
+
+  document.getElementById('login-cancel')?.addEventListener('click', () => {
+    closeLoginModal();
+  });
+  document.getElementById('login-modal-close')?.addEventListener('click', () => {
+    closeLoginModal();
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    showErr('login-email-err');
+    showErr('login-form-err');
+
+    const emailRaw = /** @type {HTMLInputElement} */ (document.getElementById('login-email')).value.trim();
+    if (!emailRaw || !isValidEmail(emailRaw)) {
+      showErr('login-email-err', 'Valid email required');
+      return;
+    }
+
+    const normalizedEmail = emailRaw.toLowerCase();
+    BrazeManager.login(normalizedEmail);
+    StorageManager.set('user_id', normalizedEmail);
+    AppLogger.info('[AUTH]', 'Login complete');
+    closeLoginModal();
+    render();
+    bindAfterRender();
+  });
+}
+
 function bindDebugOverlay() {
-  if (new URLSearchParams(location.search).get('debug') !== 'true') return;
+  if (!isDebugOverlayEligible()) {
+    if (unsubBrazeEvents) {
+      unsubBrazeEvents();
+      unsubBrazeEvents = null;
+    }
+    return;
+  }
 
   const drawer = document.getElementById('debug-drawer');
   const trigger = document.getElementById('debug-drawer-trigger');
-  trigger?.classList.remove('hidden');
   trigger?.addEventListener('click', () => {
     drawer?.classList.remove('-translate-x-full');
     void refreshDebugPanels();
   });
   document.getElementById('debug-drawer-close')?.addEventListener('click', () => {
     drawer?.classList.add('-translate-x-full');
+  });
+
+  document.getElementById('debug-hide-launcher')?.addEventListener('click', () => {
+    if (isDebugUrl()) return;
+    StorageManager.set('debug_launcher_hidden', true);
+    applyDebugLauncherVisibility();
+    drawer?.classList.add('-translate-x-full');
+  });
+
+  document.getElementById('debug-show-launcher')?.addEventListener('click', () => {
+    if (isDebugUrl()) return;
+    StorageManager.set('debug_launcher_hidden', false);
+    applyDebugLauncherVisibility();
   });
 
   if (unsubBrazeEvents) {
@@ -363,6 +511,8 @@ function bindDebugOverlay() {
   });
 
   document.getElementById('debug-refresh-profile')?.addEventListener('click', () => refreshDebugPanels());
+
+  applyDebugLauncherVisibility();
 }
 
 async function refreshDebugPanels() {

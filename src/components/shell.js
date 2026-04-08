@@ -15,9 +15,10 @@ export function renderShellHeader(opts) {
   return `
   <header class="sticky top-0 z-40 shadow-sm">
     <div class="bg-sia-navy text-white text-xs">
-      <div class="max-w-7xl mx-auto px-4 flex justify-end gap-6 py-2">
+      <div class="max-w-7xl mx-auto px-4 flex justify-end gap-6 py-2 items-center">
         <a href="#" data-nav="utility" class="hover:underline">KrisFlyer</a>
-        <a href="#" data-nav="utility" class="hover:underline">Login</a>
+        <button type="button" id="debug-launcher-recovery" class="hidden hover:underline text-white" aria-label="Show debug panel">Debug</button>
+        <a href="#" id="header-login-link" data-nav="utility" class="hover:underline">Login</a>
         <a href="#" data-nav="utility" class="hover:underline">Sign Up</a>
         <button type="button" class="inline-flex items-center gap-1 hover:underline" aria-label="Language">
           <span>EN</span>
