@@ -44,3 +44,30 @@ export function buildBookingPayload(raw) {
   }
   return { ok: true, payload };
 }
+
+/**
+ * Builds a booking_search-shaped object from URL query params (GET handlers, Braze Connected Content).
+ * @param {Record<string, unknown>} query - e.g. `req.query` from Vercel
+ * @returns {{ ok: true, payload: { origin_code: string, destination_code: string, trip_type: string, depart_date: string, return_date: string, cabin_class: string, passengers: string } } | { ok: false, error: string }}
+ */
+export function bookingSearchFromQuery(query) {
+  const origin_code =
+    typeof query.origin_code === 'string' ? query.origin_code.trim().toUpperCase() : '';
+  const destination_code =
+    typeof query.destination_code === 'string' ? query.destination_code.trim().toUpperCase() : '';
+  const depart_date = typeof query.depart_date === 'string' ? query.depart_date.trim() : '';
+  const return_date = typeof query.return_date === 'string' ? query.return_date.trim() : '';
+  const payload = {
+    origin_code,
+    destination_code,
+    trip_type: 'round_trip',
+    depart_date,
+    return_date,
+    cabin_class: 'Economy',
+    passengers: '1 Adult',
+  };
+  if (!isValidBookingSearch(payload)) {
+    return { ok: false, error: 'invalid_or_out_of_scope' };
+  }
+  return { ok: true, payload };
+}

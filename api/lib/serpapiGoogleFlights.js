@@ -179,16 +179,95 @@ function mergeFlightLists(data) {
 }
 
 /**
- * Calls SerpAPI Google Flights for round-trip Economy, Singapore Airlines only, SIN → destination.
+ * True when SerpAPI included a non-null `price_insights` object on the response.
+ * @param {unknown} data
+ * @returns {boolean}
+ */
+function hasPriceInsightsBlock(data) {
+  if (!data || typeof data !== 'object') return false;
+  const pi = /** @type {{ price_insights?: unknown }} */ (data).price_insights;
+  return pi != null && typeof pi === 'object';
+}
+
+/**
+ * Parses SerpAPI `price_insights` for downstream flattening (Braze, etc.).
+ * @param {unknown} data - Root SerpAPI JSON for `engine=google_flights`.
+ * @returns {{ lowest_price: number | null, price_level: string | null, typical_low: number | null, typical_high: number | null, price_history: Array<[number, number]> } | null}
+ */
+export function extractPriceInsights(data) {
+  if (!data || typeof data !== 'object') return null;
+  const raw = /** @type {{ price_insights?: unknown }} */ (data).price_insights;
+  if (raw == null || typeof raw !== 'object') return null;
+  const o = /** @type {Record<string, unknown>} */ (raw);
+
+  let lowest = null;
+  const lp = o.lowest_price;
+  if (typeof lp === 'number' && Number.isFinite(lp)) lowest = lp;
+  else if (typeof lp === 'string' && lp.trim()) {
+    const n = Number(lp);
+    if (Number.isFinite(n)) lowest = n;
+  }
+
+  const level = typeof o.price_level === 'string' && o.price_level.trim() ? o.price_level : null;
+
+  let typicalLow = null;
+  let typicalHigh = null;
+  const range = o.typical_price_range;
+  if (Array.isArray(range) && range.length >= 2) {
+    const a = range[0];
+    const b = range[1];
+    if (typeof a === 'number' && Number.isFinite(a)) typicalLow = a;
+    else if (typeof a === 'string' && String(a).trim()) {
+      const n = Number(a);
+      if (Number.isFinite(n)) typicalLow = n;
+    }
+    if (typeof b === 'number' && Number.isFinite(b)) typicalHigh = b;
+    else if (typeof b === 'string' && String(b).trim()) {
+      const n = Number(b);
+      if (Number.isFinite(n)) typicalHigh = n;
+    }
+  }
+
+  /** @type {Array<[number, number]>} */
+  const price_history = [];
+  if (Array.isArray(o.price_history)) {
+    for (const row of o.price_history) {
+      if (Array.isArray(row) && row.length >= 2) {
+        const u = row[0];
+        const p = row[1];
+        const uNum = typeof u === 'number' ? u : Number(u);
+        const pNum = typeof p === 'number' ? p : Number(p);
+        if (Number.isFinite(uNum) && Number.isFinite(pNum)) {
+          price_history.push([uNum, pNum]);
+        }
+      }
+    }
+  }
+
+  return {
+    lowest_price: lowest,
+    price_level: level,
+    typical_low: typicalLow,
+    typical_high: typicalHigh,
+    price_history,
+  };
+}
+
+/**
+ * Calls SerpAPI Google Flights for round-trip Economy, Singapore Airlines only, origin → destination.
  * @param {string} apiKey - SerpAPI key (server-side only).
  * @param {{ origin_code: string, destination_code: string, depart_date: string, return_date: string }} search - must be allowlisted before call.
- * @returns {Promise<{ ok: boolean, error?: string, itineraries: ReturnType<typeof normalizeItinerary>[] }>}
+ * @returns {Promise<{ ok: boolean, error?: string, itineraries: ReturnType<typeof normalizeItinerary>[], price_insights: ReturnType<typeof extractPriceInsights>, insights_available: boolean }>}
  */
 export async function fetchSqGoogleFlights(apiKey, search) {
+  const departureId = String(search.origin_code || DEMO_ORIGIN_CODE)
+    .trim()
+    .toUpperCase();
+
   const params = new URLSearchParams({
     engine: 'google_flights',
     api_key: apiKey,
-    departure_id: DEMO_ORIGIN_CODE,
+    departure_id: departureId,
     arrival_id: search.destination_code,
     outbound_date: search.depart_date,
     return_date: search.return_date,
@@ -207,24 +286,51 @@ export async function fetchSqGoogleFlights(apiKey, search) {
   try {
     res = await fetch(url, { method: 'GET' });
   } catch (e) {
-    return { ok: false, error: `network: ${String(e)}`, itineraries: [] };
+    return {
+      ok: false,
+      error: `network: ${String(e)}`,
+      itineraries: [],
+      price_insights: null,
+      insights_available: false,
+    };
   }
 
   let data;
   try {
     data = await res.json();
   } catch {
-    return { ok: false, error: 'invalid_json_from_serpapi', itineraries: [] };
+    return {
+      ok: false,
+      error: 'invalid_json_from_serpapi',
+      itineraries: [],
+      price_insights: null,
+      insights_available: false,
+    };
   }
 
   if (!res.ok) {
     const msg = typeof data?.error === 'string' ? data.error : `http_${res.status}`;
-    return { ok: false, error: msg, itineraries: [] };
+    return {
+      ok: false,
+      error: msg,
+      itineraries: [],
+      price_insights: null,
+      insights_available: false,
+    };
   }
 
   if (data && typeof data === 'object' && typeof /** @type {{ error?: string }} */ (data).error === 'string') {
-    return { ok: false, error: /** @type {{ error: string }} */ (data).error, itineraries: [] };
+    return {
+      ok: false,
+      error: /** @type {{ error: string }} */ (data).error,
+      itineraries: [],
+      price_insights: null,
+      insights_available: false,
+    };
   }
+
+  const insights_available = hasPriceInsightsBlock(data);
+  const price_insights = extractPriceInsights(data);
 
   const merged = filterAllSqItineraries(mergeFlightLists(data));
   /** @type {ReturnType<typeof normalizeItinerary>[]} */
@@ -236,5 +342,5 @@ export async function fetchSqGoogleFlights(apiKey, search) {
     if (n) itineraries.push(n);
   }
 
-  return { ok: true, itineraries };
+  return { ok: true, itineraries, price_insights, insights_available };
 }
