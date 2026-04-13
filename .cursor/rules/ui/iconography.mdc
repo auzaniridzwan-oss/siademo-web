@@ -9,7 +9,7 @@ globs: ["index.html", "**/*.js", "**/*.css", "**/components/*"]
 ## 1. Script Integration
 - **Source:** Use the personal FontAwesome Kit: `https://kit.fontawesome.com/a21f98a3f6.js`.
 - **Placement:** Must be loaded in the `<head>` of `index.html` with the `crossorigin="anonymous"` attribute.
-- **Loading:** Use `async` or `defer` 
+- **Loading:** Use `async` or `defer` to not block loading of website.
 
 ## 2. Usage Patterns
 - **Library:** Use "Pro" or "Free" icons consistent with the kit's availability (prefer `fas` for solid, `far` for regular).

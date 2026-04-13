@@ -118,6 +118,22 @@ function cardHtml(promo) {
 }
 
 /**
+ * Outer slot wrapper for Braze / programmatic replacement (fixed IDs per column).
+ * @param {HighlightPromo} promo
+ * @param {1|2|3} slotIndex
+ * @returns {string}
+ */
+function wrapHighlightSlot(promo, slotIndex) {
+  const id =
+    slotIndex === 1
+      ? 'ux_highlight_1'
+      : slotIndex === 2
+        ? 'ux_highlight_2'
+        : 'ux_highlight_3';
+  return `<div id="${id}">${cardHtml(promo)}</div>`;
+}
+
+/**
  * @param {HTMLElement} rootEl - Container `#highlights-cards`
  * @returns {{ setPromoCards: (cards: HighlightPromo[]) => void, resetToDemo: () => void, dispose: () => void }}
  */
@@ -159,7 +175,9 @@ export function createHighlightsSection(rootEl) {
     const key = visible.map((p) => p.id).join('|');
     if (key !== lastRenderedKey) {
       lastRenderedKey = key;
-      rootEl.innerHTML = visible.map(cardHtml).join('');
+      rootEl.innerHTML = visible
+        .map((promo, i) => wrapHighlightSlot(promo, /** @type {1|2|3} */ (i + 1)))
+        .join('');
     }
     visibleById = new Map(visible.map((p) => [p.id, p]));
 

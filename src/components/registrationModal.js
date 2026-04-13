@@ -68,3 +68,96 @@ export function validateSgPhone(phoneRaw) {
 export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
+
+/** @typedef {'Base' | 'Elite Silver' | 'Elite Gold' | 'PPS Club'} SiaLoyaltyTier */
+
+/**
+ * Random integer in [min, max], inclusive.
+ * @param {number} min
+ * @param {number} max
+ * @returns {number}
+ */
+function randomIntInclusive(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const SIA_LOYALTY_TIERS = /** @type {const} */ (['Base', 'Elite Silver', 'Elite Gold', 'PPS Club']);
+
+/**
+ * @returns {SiaLoyaltyTier}
+ */
+function pickSiaLoyaltyTier() {
+  const i = randomIntInclusive(0, SIA_LOYALTY_TIERS.length - 1);
+  return SIA_LOYALTY_TIERS[i];
+}
+
+/**
+ * Miles range depends on the assigned loyalty tier (demo data for Braze).
+ * @param {SiaLoyaltyTier} tier
+ * @returns {number}
+ */
+function milesForSiaLoyaltyTier(tier) {
+  switch (tier) {
+    case 'Base':
+      return randomIntInclusive(1, 20000);
+    case 'Elite Silver':
+      return randomIntInclusive(25000, 50000);
+    case 'Elite Gold':
+      return randomIntInclusive(50000, 100000);
+    case 'PPS Club':
+      return randomIntInclusive(100000, 500000);
+    default:
+      return randomIntInclusive(1, 20000);
+  }
+}
+
+const SIA_MEAL_PREFS = /** @type {const} */ ([
+  'Normal',
+  'Gluten Free',
+  'Vegetarian',
+  'Vegan',
+  'Kosher',
+  'Halal',
+]);
+
+/**
+ * @returns {(typeof SIA_MEAL_PREFS)[number]}
+ */
+function pickSiaMealPreference() {
+  const i = randomIntInclusive(0, SIA_MEAL_PREFS.length - 1);
+  return SIA_MEAL_PREFS[i];
+}
+
+const SIA_SEAT_PREFS = /** @type {const} */ (['Aisle', 'Window', 'Legroom', 'No Preference']);
+
+/**
+ * @returns {(typeof SIA_SEAT_PREFS)[number]}
+ */
+function pickSiaSeatPreference() {
+  const i = randomIntInclusive(0, SIA_SEAT_PREFS.length - 1);
+  return SIA_SEAT_PREFS[i];
+}
+
+/**
+ * @typedef {Object} SiaDemoRegistrationAttributes
+ * @property {string} sia_loyalty_tier
+ * @property {number} sia_loyalty_miles
+ * @property {string} sia_preference_meals
+ * @property {string} sia_preference_seats
+ * @property {'true'} sia_demo_segment
+ */
+
+/**
+ * Random demo loyalty and meal/seat preferences for Braze custom attributes on registration.
+ * @returns {SiaDemoRegistrationAttributes}
+ */
+export function getSiaDemoRegistrationAttributes() {
+  const tier = pickSiaLoyaltyTier();
+  return {
+    sia_loyalty_tier: tier,
+    sia_loyalty_miles: milesForSiaLoyaltyTier(tier),
+    sia_preference_meals: pickSiaMealPreference(),
+    sia_preference_seats: pickSiaSeatPreference(),
+    sia_demo_segment: 'true',
+  };
+}

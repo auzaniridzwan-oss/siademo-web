@@ -33,11 +33,10 @@ globs: ["**/*.js", "**/*.ts", "**/*.tsx", "**/*.html", "**/BrazeManager.*"]
 * **Accessibility:** Associate `<label>` with inputs; surface errors in text near fields and optional `aria-invalid`.
 
 ## 5. Persisted storage (StorageManager)
-* **Do not** store first name, last name, email, or phone in `localStorage` (PII policy in `utilties/localstorage.mdc`).
 * **After successful registration only**, persist **`user_id`** (suffix) = the **external_id** passed to Braze `changeUser`.
 * **External ID strategy (choose one and document in README):**
-    * **Recommended:** Deterministic id from email, e.g. `sia_demo_${base64url(sha256(normalizedEmail))}` or a **UUID v4** generated once at submit — **not** the raw email string in `localStorage` if you treat email as sensitive in storage; or use **normalized email** as `user_id` value if product accepts storing email as external_id only (still minimize duplication in other keys).
-* **Minimum:** Whatever string is used as **`external_id`** for `changeUser` must be what is saved via `StorageManager.set('user_id', externalId)`.
+*   **normalized email** as `user_id` 
+*   **Minimum:** Whatever string is used as **`external_id`** for `changeUser` must be what is saved via `StorageManager.set('user_id', externalId)`.
 
 ## 6. Braze integration (`BrazeManager`)
 * Implement a single orchestrated method, e.g. **`registerAndLogin(profile)`** or **`completeRegistration(payload)`**, that:

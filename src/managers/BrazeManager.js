@@ -1,4 +1,5 @@
 import * as braze from '@braze/web-sdk';
+import { getSiaDemoRegistrationAttributes } from '../components/registrationModal.js';
 import { AppLogger } from './AppLogger.js';
 import { StorageManager } from './StorageManager.js';
 
@@ -199,6 +200,11 @@ class BrazeManagerClass {
         if (profile.phone) {
           user.setPhoneNumber?.(profile.phone);
         }
+      }
+
+      const siaDemo = getSiaDemoRegistrationAttributes();
+      for (const [key, value] of Object.entries(siaDemo)) {
+        this.setCustomAttribute(key, value);
       }
 
       const now = new Date().toISOString();
