@@ -1,5 +1,8 @@
 import { FARE_BUCKETS } from '../data/flights.js';
 
+/** Index of the Value fare bucket; API base price is stored here when present. */
+const VALUE_FARE_INDEX = FARE_BUCKETS.indexOf('Value');
+
 /**
  * @param {number} offset
  * @returns {string}
@@ -38,6 +41,36 @@ function resolveRouteCodes(routeCodes, f) {
 }
 
 /**
+ * Full airport names for the page header, falling back to IATA codes when names are missing.
+ * @param {{ originAirportName?: string, destinationAirportName?: string }} f
+ * @param {{ o: string, d: string }} headerCodes
+ * @returns {{ origin: string, destination: string }}
+ */
+function resolveHeaderRouteLabels(f, headerCodes) {
+  const origin = (f.originAirportName && String(f.originAirportName).trim()) || headerCodes.o;
+  const destination =
+    (f.destinationAirportName && String(f.destinationAirportName).trim()) || headerCodes.d;
+  return { origin, destination };
+}
+
+/**
+ * When Value (`prices[VALUE_FARE_INDEX]`) is set, derives Lite/Standard/Flexi from that base for display; otherwise returns the raw bucket price (for legacy mock rows).
+ * @param {(number|null|undefined)[]} prices
+ * @param {number} bucketIndex
+ * @returns {number|null}
+ */
+function getDisplayPriceForBucket(prices, bucketIndex) {
+  const base = prices[VALUE_FARE_INDEX];
+  if (base != null && Number.isFinite(base)) {
+    const multipliers = [0.85, 1, 1.2, 1.3];
+    return base * multipliers[bucketIndex];
+  }
+  const raw = prices[bucketIndex];
+  return raw != null && Number.isFinite(raw) ? raw : null;
+}
+
+/**
+ * Renders the flight search results list. When `data.flights[n].prices[1]` (Value) is set, Lite/Standard/Flexi display amounts are derived from that API base at render time.
  * @param {{ flights: Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName?: string, destinationAirportName?: string, originAirportCode?: string, destinationAirportCode?: string, aircraft?: string, arrivalDayOffset?: number }>, searchSummary?: string, routeCodes?: { origin_code: string, destination_code: string }, dateRangeLine?: string }} data
  * @returns {string}
  */
@@ -70,9 +103,10 @@ export function renderSearchResults(data) {
 
   const f0 = flights[0];
   const headerCodes = resolveRouteCodes(routeCodes, f0);
+  const headerLabels = resolveHeaderRouteLabels(f0, headerCodes);
   const pageRouteLine =
-    headerCodes.o && headerCodes.d
-      ? `<p class="text-center font-bold text-lg text-sia-navy">${headerCodes.o} → ${headerCodes.d}</p>`
+    headerLabels.origin && headerLabels.destination
+      ? `<p class="text-center font-bold text-lg text-sia-navy">${headerLabels.origin} → ${headerLabels.destination}</p>`
       : '';
   const pageSubtitle = dateRangeLine
     ? `<p class="text-center text-sm text-sia-text-muted mt-1">${dateRangeLine}</p>`
@@ -86,12 +120,12 @@ export function renderSearchResults(data) {
 
   const cards = flights
     .map((f) => {
-      const cells = FARE_BUCKETS.map((bucket, i) => {
-        const p = f.prices[i];
+      const cells = FARE_BUCKETS.map((_, i) => {
+        const p = getDisplayPriceForBucket(f.prices, i);
         if (p == null) {
           return `<td class="px-2 py-3 text-center border-l border-sia-border text-sia-text-muted text-xs first:border-l-0">Sold out</td>`;
         }
-        return `<td class="px-2 py-3 text-center border-l border-sia-border first:border-l-0"><span class="text-sia-gold font-semibold">${formatSgdWhole(p)}</span><span class="block text-[0.65rem] text-sia-text-muted">Seats</span></td>`;
+        return `<td class="px-2 py-3 text-center border-l border-sia-border first:border-l-0"><span class="text-sia-gold font-semibold">${formatSgdWhole(p)}</span></td>`;
       }).join('');
 
       const offset =
