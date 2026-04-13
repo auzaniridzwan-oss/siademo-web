@@ -132,7 +132,7 @@ class BrazeManagerClass {
   setCustomAttribute(key, value) {
     try {
       const user = braze.getUser?.();
-      user?.setCustomAttribute?.(key, value);
+      user?.setCustomUserAttribute?.(key, value);
     } catch (e) {
       AppLogger.warn('[SDK]', 'setCustomAttribute failed', e);
     }
