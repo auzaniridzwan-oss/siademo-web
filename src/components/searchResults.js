@@ -3,6 +3,12 @@ import { FARE_BUCKETS } from '../data/flights.js';
 /** Index of the Value fare bucket; API base price is stored here when present. */
 const VALUE_FARE_INDEX = FARE_BUCKETS.indexOf('Value');
 
+/** Tailwind classes toggled on the active fare button per row. */
+const FARE_OPTION_SELECTED_CLASSES = ['ring-2', 'ring-inset', 'ring-sia-gold', 'bg-sia-gold/15'];
+
+/** @type {((e: MouseEvent) => void) | null} */
+let fareOptionDelegate = null;
+
 /**
  * @param {number} offset
  * @returns {string}
@@ -70,6 +76,36 @@ function getDisplayPriceForBucket(prices, bucketIndex) {
 }
 
 /**
+ * Delegates fare selection: one active fare per table row. Call with `active: false` when leaving search results to remove the listener from `#main-view`.
+ * @param {HTMLElement} root - Container that includes fare tables (e.g. `#main-view`).
+ * @param {boolean} [active=true] - When false, only removes the previously registered delegate from `root`.
+ * @returns {void}
+ */
+export function bindFareOptionSelection(root, active = true) {
+  if (fareOptionDelegate) {
+    root.removeEventListener('click', fareOptionDelegate);
+    fareOptionDelegate = null;
+  }
+  if (!active) return;
+
+  fareOptionDelegate = (e) => {
+    const t = e.target;
+    const el = t instanceof Element ? t : t.parentElement;
+    const btn = el && 'closest' in el ? el.closest('[data-fare-option]') : null;
+    if (!btn || !root.contains(btn)) return;
+    const tr = btn.closest('tr');
+    if (!tr) return;
+    tr.querySelectorAll('[data-fare-option]').forEach((b) => {
+      b.classList.remove(...FARE_OPTION_SELECTED_CLASSES);
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add(...FARE_OPTION_SELECTED_CLASSES);
+    btn.setAttribute('aria-pressed', 'true');
+  };
+  root.addEventListener('click', fareOptionDelegate);
+}
+
+/**
  * Renders the flight search results list. When `data.flights[n].prices[1]` (Value) is set, Lite/Standard/Flexi display amounts are derived from that API base at render time.
  * @param {{ flights: Array<{ id: string, flightNumber: string, departureTime: string, arrivalTime: string, duration: string, prices: (number|null)[], originAirportName?: string, destinationAirportName?: string, originAirportCode?: string, destinationAirportCode?: string, aircraft?: string, arrivalDayOffset?: number }>, searchSummary?: string, routeCodes?: { origin_code: string, destination_code: string }, dateRangeLine?: string }} data
  * @returns {string}
@@ -120,12 +156,23 @@ export function renderSearchResults(data) {
 
   const cards = flights
     .map((f) => {
-      const cells = FARE_BUCKETS.map((_, i) => {
+      const cells = FARE_BUCKETS.map((bucket, i) => {
         const p = getDisplayPriceForBucket(f.prices, i);
         if (p == null) {
           return `<td class="px-2 py-3 text-center border-l border-sia-border text-sia-text-muted text-xs first:border-l-0">Sold out</td>`;
         }
-        return `<td class="px-2 py-3 text-center border-l border-sia-border first:border-l-0"><span class="text-sia-gold font-semibold">${formatSgdWhole(p)}</span></td>`;
+        const label = `${bucket}, ${formatSgdWhole(p)}`;
+        return `<td class="p-0 align-middle border-l border-sia-border first:border-l-0">
+          <button
+            type="button"
+            class="fare-option w-full min-h-[3rem] px-2 py-3 text-center text-sm border-0 bg-transparent cursor-pointer rounded-sm transition-colors duration-150 hover:bg-sia-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-sia-gold text-sia-gold font-semibold"
+            data-fare-option
+            data-flight-id="${f.id}"
+            data-fare-index="${i}"
+            aria-pressed="false"
+            aria-label="Select ${label}"
+          >${formatSgdWhole(p)}</button>
+        </td>`;
       }).join('');
 
       const offset =

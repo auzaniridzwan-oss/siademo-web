@@ -1,7 +1,7 @@
 import { renderShellFooter, renderShellHeader } from './components/shell.js';
 import { renderHomeBooking } from './components/homeBooking.js';
 import { createHighlightsSection, renderHighlightsSection } from './components/highlightsSection.js';
-import { renderSearchResults } from './components/searchResults.js';
+import { renderSearchResults, bindFareOptionSelection } from './components/searchResults.js';
 import { renderRegistrationModal, isValidEmail, validateSgPhone } from './components/registrationModal.js';
 import { renderLoginModal } from './components/loginModal.js';
 import { renderDebugOverlay } from './components/debugOverlay.js';
@@ -238,6 +238,11 @@ function bindAfterRender() {
   if (highlightsController) {
     highlightsController.dispose();
     highlightsController = null;
+  }
+
+  const main = document.getElementById('main-view');
+  if (main) {
+    bindFareOptionSelection(main, currentView === VIEWS.SEARCH_RESULTS);
   }
 
   document.getElementById('sia-logo-btn')?.addEventListener('click', () => navigate(VIEWS.HOME));
