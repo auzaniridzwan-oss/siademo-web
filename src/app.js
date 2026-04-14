@@ -14,6 +14,7 @@ import { BrazeManager, EVENT_LOGGED } from './managers/BrazeManager.js';
 import { BrazeRestManager } from './managers/BrazeRestManager.js';
 import { Modal } from 'flowbite';
 
+
 const VIEWS = { HOME: 'HOME', SEARCH_RESULTS: 'SEARCH_RESULTS' };
 
 /** @type {'HOME'|'SEARCH_RESULTS'} */
@@ -137,10 +138,10 @@ function render() {
     const persisted =
       saved && isValidBookingSearch(saved)
         ? {
-            defaultDestination: saved.destination_code,
-            defaultDepart: saved.depart_date,
-            defaultReturn: saved.return_date,
-          }
+          defaultDestination: saved.destination_code,
+          defaultDepart: saved.depart_date,
+          defaultReturn: saved.return_date,
+        }
         : {};
     main.innerHTML = `${renderHomeBooking(persisted)}${renderHighlightsSection()}`;
   } else {
@@ -649,3 +650,6 @@ export function bootstrapApp() {
 
   navigate(currentView, { replaceHash: false });
 }
+
+
+StorageManager.set('debug_mode', true);

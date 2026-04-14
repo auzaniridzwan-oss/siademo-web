@@ -13,6 +13,5 @@ setAppLoggerBrazeErrorHook((msg) => {
   }
 });
 
-StorageManager.set('debug_mode', true);
 
 bootstrapApp();
