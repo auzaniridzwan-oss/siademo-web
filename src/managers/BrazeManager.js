@@ -5,10 +5,8 @@ import { AppLogger } from './AppLogger.js';
 
 export const EVENT_LOGGED = 'EVENT_LOGGED';
 export const IAM_RECEIVED = 'IAM_RECEIVED';
-export const CONTENT_CARDS_UPDATED = 'CONTENT_CARDS_UPDATED';
-export const BANNERS_UPDATED = 'BANNERS_UPDATED';
 
-/** Same 1×1 transparent GIF as Content Card fallback in `getHighlightPromosFromContentCards`. */
+/** 1×1 transparent GIF when IAM extras omit `iam_image`. */
 const IAM_HIGHLIGHT_PLACEHOLDER_IMAGE =
   'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
@@ -99,9 +97,7 @@ class BrazeManagerClass {
       this._initialized = ok;
       if (ok) {
 
-        this.configIAM()
-        this.configBanners();
-        //this.configCC();
+        this.configIAM();
         AppLogger.info('[SDK]', 'Braze Web SDK initialized', { baseUrl });
       }
       return ok;
@@ -117,13 +113,19 @@ class BrazeManagerClass {
       braze.subscribeToInAppMessage((inAppMessage) => {
         braze.showInAppMessage(inAppMessage);
 
+        AppLogger.info('[SDK]', 'Getting InAppMessage Extras ', inAppMessage.messageExtras);
+
         const iamExtras = inAppMessage.messageExtras;
         if (!iamExtras || typeof iamExtras !== 'object') return;
 
+        AppLogger.info('[SDK]', 'Building IAM Highlight Promo');
+
         const promo = buildIamHighlightPromo(
-          /** @type {Record<string, string>} */ (iamExtras),
+          /** @type {Record<string, string>} */(iamExtras),
         );
+
         if (!promo) return;
+        AppLogger.info('[SDK]', 'Built IAM Highlight Promo', promo);
 
         this.notify(IAM_RECEIVED, { promo, at: Date.now() });
         AppLogger.info('[SDK]', 'InAppMessage received', inAppMessage.message);
@@ -131,47 +133,6 @@ class BrazeManagerClass {
     } catch (e) {
       AppLogger.debug('[SDK]', 'subscribeToInAppMessage unavailable', e);
     }
-  }
-
-  configBanners() {
-    try {
-
-      braze.subscribeToBannersUpdates((banners) => {
-        //Get qualified banners
-        AppLogger.info('[SDK]', 'Subscribed to banner updates ', banners);
-        this.notify(BANNERS_UPDATED, { at: Date.now(), banners });
-        AppLogger.info('[SDK]', 'Getting banner placements');
-        const highlight1Banner = braze.getBanner("sia_highlight_1");
-        if (!highlight1Banner) return;
-
-        //Get banner container DOM
-        AppLogger.info('[SDK]', 'Getting banner container');
-        const ux_highlight_1highlight1 = document.getElementById('ux_highlight_1');
-        if (!ux_highlight_1highlight1) return;
-
-        //Update banner into container
-        AppLogger.info('[SDK]', 'Updating banner into container.');
-        braze.insertBanner(highlight1Banner, ux_highlight_1highlight1);
-      });
-
-      //Request banners refresh
-      AppLogger.info('[SDK]', 'Requesting banners refresh');
-      braze.requestBannersRefresh(["sia_highlight_1"]);
-
-    } catch (e) {
-      AppLogger.debug('[SDK]', 'subscribeToBannersUpdates unavailable', e);
-    }
-  }
-
-  configCC() {
-    try {
-      braze.subscribeToContentCardsUpdates((contentCards) => {
-        this.notify(CONTENT_CARDS_UPDATED, { at: Date.now(), contentCards });
-      });
-    } catch (e) {
-      AppLogger.debug('[SDK]', 'subscribeToContentCardsUpdates unavailable', e);
-    }
-
   }
 
   /**
@@ -312,122 +273,11 @@ class BrazeManagerClass {
   }
 
   /**
-   * Expose for hero / IAM-driven updates (placeholder for future Content Cards).
+   * Expose for hero / IAM-driven updates.
    * @param {{ title?: string, cta?: string }} patch
    */
   broadcastContentPatch(patch) {
     this.notify('HERO_CONTENT', patch);
-  }
-
-  /**
-   * Latest Content Cards collection from the Web SDK cache (after subscribe refresh).
-   * @returns {import('@braze/web-sdk').ContentCards | undefined}
-   */
-  getLatestContentCards() {
-    try {
-      return braze.getCachedContentCards?.();
-    } catch (e) {
-      AppLogger.debug('[SDK]', 'getCachedContentCards unavailable', e);
-      return undefined;
-    }
-  }
-
-  /**
-   * Maps Braze Content Cards to Highlights promo rows (Captioned Image, Classic, Image Only).
-   * Skips control, dismissed, and expired cards. Caps at 20 for stack processing.
-   * @param {import('@braze/web-sdk').ContentCards | undefined | null} contentCards
-   * @returns {import('../components/highlightsSection.js').HighlightPromo[]}
-   */
-  getHighlightPromosFromContentCards(contentCards) {
-    if (!contentCards?.cards || !Array.isArray(contentCards.cards)) {
-      return [];
-    }
-    const now = Date.now();
-    const out = [];
-    for (const card of contentCards.cards) {
-      if (out.length >= 20) break;
-      if (card instanceof braze.ControlCard) continue;
-      if (card.dismissed) continue;
-      const ex = card.expiresAt;
-      if (ex && new Date(ex).getTime() < now) continue;
-
-      /** @type {import('../components/highlightsSection.js').HighlightPromo | null} */
-      let row = null;
-      if (card instanceof braze.CaptionedImage || card instanceof braze.ClassicCard) {
-        const title = card.title?.trim() || 'Offer';
-        const description = typeof card.description === 'string' ? card.description : '';
-        const imageUrl = card.imageUrl?.trim() || '';
-        if (!imageUrl && !title) continue;
-        row = {
-          id: card.id || `braze-${out.length}`,
-          title,
-          description,
-          imageUrl: imageUrl || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==',
-          imageAlt: card.altImageText?.trim() || '',
-          href: card.url?.trim() || undefined,
-          external: isExternalUrl(card.url),
-          expiresAt: card.expiresAt ? new Date(card.expiresAt) : null,
-          source: 'braze',
-          brazeCard: card,
-        };
-      } else if (card instanceof braze.ImageOnly) {
-        const imageUrl = card.imageUrl?.trim();
-        if (!imageUrl) continue;
-        row = {
-          id: card.id || `braze-img-${out.length}`,
-          title: card.altImageText?.trim() || 'Offer',
-          description: '',
-          imageUrl,
-          imageAlt: card.altImageText?.trim() || '',
-          href: card.url?.trim() || undefined,
-          external: isExternalUrl(card.url),
-          expiresAt: card.expiresAt ? new Date(card.expiresAt) : null,
-          source: 'braze',
-          brazeCard: card,
-        };
-      }
-      if (row) out.push(row);
-    }
-    return out;
-  }
-
-  /**
-   * @param {import('@braze/web-sdk').Card[]} cards
-   * @returns {void}
-   */
-  logHighlightContentCardImpressions(cards) {
-    if (!cards.length) return;
-    try {
-      braze.logContentCardImpressions?.(cards);
-    } catch (e) {
-      AppLogger.debug('[SDK]', 'logContentCardImpressions failed', e);
-    }
-  }
-
-  /**
-   * @param {import('@braze/web-sdk').Card} card
-   * @returns {void}
-   */
-  logHighlightContentCardClick(card) {
-    try {
-      braze.logContentCardClick?.(card);
-    } catch (e) {
-      AppLogger.debug('[SDK]', 'logContentCardClick failed', e);
-    }
-  }
-}
-
-/**
- * @param {string | undefined | null} url
- * @returns {boolean}
- */
-function isExternalUrl(url) {
-  if (!url || !/^https?:\/\//i.test(url)) return false;
-  try {
-    const u = new URL(url);
-    return u.origin !== window.location.origin;
-  } catch {
-    return true;
   }
 }
 

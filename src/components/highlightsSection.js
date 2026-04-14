@@ -1,5 +1,5 @@
 import { HIGHLIGHTS_DEMO_PROMOS } from '../data/highlightsDemo.js';
-import { BrazeManager, CONTENT_CARDS_UPDATED, IAM_RECEIVED } from '../managers/BrazeManager.js';
+import { BrazeManager, IAM_RECEIVED } from '../managers/BrazeManager.js';
 import { AppLogger } from '../managers/AppLogger.js';
 
 /**
@@ -12,8 +12,7 @@ import { AppLogger } from '../managers/AppLogger.js';
  * @property {string} [href]
  * @property {boolean} [external]
  * @property {Date|null} [expiresAt]
- * @property {'demo'|'braze'|'iam'} source
- * @property {import('@braze/web-sdk').Card} [brazeCard]
+ * @property {'demo'|'iam'} source
  */
 
 const MAX_VISIBLE = 3;
@@ -148,23 +147,16 @@ export function createHighlightsSection(rootEl) {
   /** @type {HighlightPromo[]} IAM-derived promos only; newest first; max {@link MAX_VISIBLE}. */
   let iamStack = [];
 
-  /** @type {Map<string, HighlightPromo>} */
-  let visibleById = new Map();
-
-  /** @type {string} */
-  let lastImpressionKey = '';
-
   /** @type {string} */
   let lastRenderedKey = '';
 
   /**
-   * IAM promos first, then Content Cards, then demo rows. Prunes expired entries from the stack.
-   * @param {import('@braze/web-sdk').ContentCards | undefined | null} contentCards
+   * IAM promos first, then demo rows. Prunes expired entries from the stack.
    */
-  function applyBrazeContentCards(contentCards) {
-    const brazeRows = BrazeManager.getHighlightPromosFromContentCards(contentCards);
+  function rebuildStack() {
     const demos = stack.filter((e) => e.source === 'demo');
-    stack = [...iamStack, ...brazeRows, ...demos];
+    AppLogger.info('[UI]', 'Rebuilding stack', { iamStack, demos });
+    stack = [...iamStack, ...demos];
     pruneStack();
     paint();
   }
@@ -174,66 +166,42 @@ export function createHighlightsSection(rootEl) {
    */
   function pushIamPromo(promo) {
     iamStack = [promo, ...iamStack].slice(0, MAX_VISIBLE);
-    const cc = BrazeManager.getLatestContentCards();
-    applyBrazeContentCards(cc);
+    AppLogger.info('[UI]', 'Pushing IAM Highlight Promo to stack', iamStack);
+    rebuildStack();
   }
 
   function pruneStack() {
+
     stack = stack.filter((e) => !entryExpired(e));
+    AppLogger.info('[UI]', 'Pruning stack', stack);
   }
 
   function paint() {
+    AppLogger.info('[UI]', 'Painting stack', stack);
     pruneStack();
     const visible = stack.slice(0, MAX_VISIBLE);
     const key = visible.map((p) => p.id).join('|');
     if (key !== lastRenderedKey) {
       lastRenderedKey = key;
       rootEl.innerHTML = visible
-        .map((promo, i) => wrapHighlightSlot(promo, /** @type {1|2|3} */ (i + 1)))
+        .map((promo, i) => wrapHighlightSlot(promo, /** @type {1|2|3} */(i + 1)))
         .join('');
+      AppLogger.info('[UI]', 'Rendered stack', rootEl.innerHTML);
     }
-    visibleById = new Map(visible.map((p) => [p.id, p]));
-
-    const brazeToLog = visible.map((p) => p.brazeCard).filter(Boolean);
-    if (brazeToLog.length && key !== lastImpressionKey) {
-      lastImpressionKey = key;
-      BrazeManager.logHighlightContentCardImpressions(/** @type {import('@braze/web-sdk').Card[]} */ (brazeToLog));
-    }
-  }
-
-  /**
-   * @param {MouseEvent} e
-   */
-  function onClickCapture(e) {
-    const el = /** @type {HTMLElement | null} */ (e.target)?.closest?.('[data-highlight-id]');
-    if (!el || !rootEl.contains(el)) return;
-    const id = el.getAttribute('data-highlight-id');
-    if (!id) return;
-    const promo = visibleById.get(id);
-    if (!promo?.brazeCard) return;
-    BrazeManager.logHighlightContentCardClick(promo.brazeCard);
-  }
-
-  rootEl.addEventListener('click', onClickCapture, true);
-
-  /**
-   * @param {{ contentCards?: import('@braze/web-sdk').ContentCards }} payload
-   */
-  function onContentCardsUpdated(payload) {
-    const cc = payload?.contentCards ?? BrazeManager.getLatestContentCards();
-    applyBrazeContentCards(cc);
   }
 
   /**
    * @param {{ promo?: HighlightPromo }} payload
    */
   function onIamReceived(payload) {
+
+    AppLogger.info('[UI]', 'IAM Highlight Promo received', payload);
     const promo = payload?.promo;
     if (!promo || typeof promo.id !== 'string') return;
     pushIamPromo(promo);
+    AppLogger.info('[UI]', 'Pushing IAM Highlight Promo to stack', promo);
   }
 
-  const unsub = BrazeManager.subscribe(CONTENT_CARDS_UPDATED, onContentCardsUpdated);
   const unsubIam = BrazeManager.subscribe(IAM_RECEIVED, onIamReceived);
 
   const expiryTimer = window.setInterval(() => {
@@ -251,7 +219,6 @@ export function createHighlightsSection(rootEl) {
     setPromoCards(cards) {
       iamStack = [];
       stack = Array.isArray(cards) ? cards.map((c) => ({ ...c })) : [];
-      lastImpressionKey = '';
       lastRenderedKey = '';
       paint();
     },
@@ -260,7 +227,6 @@ export function createHighlightsSection(rootEl) {
     resetToDemo() {
       iamStack = [];
       stack = cloneDemoPromos();
-      lastImpressionKey = '';
       lastRenderedKey = '';
       paint();
     },
@@ -269,13 +235,10 @@ export function createHighlightsSection(rootEl) {
     dispose() {
       window.clearInterval(expiryTimer);
       try {
-        unsub();
         unsubIam();
       } catch (e) {
         AppLogger.warn('[UI]', 'Highlights dispose unsubscribe failed', e);
       }
-      rootEl.removeEventListener('click', onClickCapture, true);
-      visibleById.clear();
     },
   };
 }
