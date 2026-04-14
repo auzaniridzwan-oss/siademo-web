@@ -205,12 +205,18 @@ function closeLoginModal() {
  */
 async function runSearchAfterAuth(payload) {
   StorageManager.set('booking_search', payload);
-  BrazeManager.logCustomEvent('flight_search', {
+  BrazeManager.setCustomAttribute('sia_last_search_origin', payload.origin_code);
+  BrazeManager.setCustomAttribute('sia_last_search_destination', payload.destination_code);
+  BrazeManager.setCustomAttribute('sia_last_search_depart', payload.depart_date);
+  BrazeManager.setCustomAttribute('sia_last_search_return', payload.return_date);
+  BrazeManager.logCustomEvent('sia_searched_flight', {
+    origin_code: payload.origin_code,
     destination_code: payload.destination_code,
     depart_date: payload.depart_date,
     return_date: payload.return_date,
     trip_type: payload.trip_type,
   });
+  BrazeManager.requestImmediateDataFlush();
 
   document.getElementById('search-loading')?.classList.remove('hidden');
 
@@ -322,6 +328,7 @@ function bindAfterRender() {
       const return_date = /** @type {HTMLInputElement} */ (document.getElementById('return_date')).value;
 
       const built = buildBookingPayload({
+        origin_code,
         destination_code,
         trip_type,
         depart_date,

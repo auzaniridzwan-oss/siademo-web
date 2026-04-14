@@ -139,6 +139,18 @@ class BrazeManagerClass {
   }
 
   /**
+   * Sends queued SDK data to Braze immediately (e.g. after profile or search attributes).
+   * @returns {void}
+   */
+  requestImmediateDataFlush() {
+    try {
+      braze.requestImmediateDataFlush?.();
+    } catch (e) {
+      AppLogger.warn('[SDK]', 'requestImmediateDataFlush failed', e);
+    }
+  }
+
+  /**
    * @param {string} name
    * @param {Record<string, unknown>} [props]
    * @returns {void}
@@ -215,7 +227,7 @@ class BrazeManagerClass {
         has_phone: !!profile.phone,
       });
 
-      braze.requestImmediateDataFlush?.();
+      this.requestImmediateDataFlush();
       return { ok: true, externalId };
     } catch (e) {
       AppLogger.warn('[AUTH]', 'completeRegistration failed', e);
