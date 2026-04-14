@@ -72,9 +72,18 @@ class BrazeManagerClass {
       if (ok) {
         braze.automaticallyShowInAppMessages();
         try {
+          braze.subscribeToInAppMessage(function (inAppMessage) {
+            braze.showInAppMessage(inAppMessage);
+            AppLogger.debug('[SDK]', 'InAppMessage received', inAppMessage.message);
+
+          });
+
+          /*
           braze.subscribeToInAppMessage(() => {
+            AppLogger.debug('[SDK]', 'InAppMessage received', e);
             this.notify(IAM_RECEIVED, { at: Date.now() });
           });
+          */
         } catch (e) {
           AppLogger.debug('[SDK]', 'subscribeToInAppMessage unavailable', e);
         }
