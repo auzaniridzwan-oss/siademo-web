@@ -100,7 +100,22 @@ class BrazeManagerClass {
           braze.subscribeToBannersUpdates((banners) => {
             AppLogger.info('[SDK]', 'Banners received', banners);
             this.notify(BANNERS_UPDATED, { at: Date.now(), banners });
+
+            AppLogger.info('[SDK]', 'Getting banner placements');
+            const highlight1Banner = braze.getBanner("sia_highlight_1");
+            if (highlight1Banner) {
+
+              AppLogger.info('[SDK]', 'Getting banner container');
+              const ux_highlight_1highlight1 = document.getElementById('ux_highlight_1');
+              if (!ux_highlight_1highlight1) return;
+
+              AppLogger.info('[SDK]', 'Updating banner into container.');
+              braze.insertBanner(highlight1Banner, ux_highlight_1highlight1);
+            }
           });
+          AppLogger.info('[SDK]', 'Requesting banners refresh');
+          braze.requestBannersRefresh(["sia_highlight_1"]);
+
         } catch (e) {
           AppLogger.debug('[SDK]', 'subscribeToBannersUpdates unavailable', e);
         }
