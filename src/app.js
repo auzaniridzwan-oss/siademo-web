@@ -328,7 +328,6 @@ function bindAfterRender() {
       const return_date = /** @type {HTMLInputElement} */ (document.getElementById('return_date')).value;
 
       const built = buildBookingPayload({
-        origin_code,
         destination_code,
         trip_type,
         depart_date,
