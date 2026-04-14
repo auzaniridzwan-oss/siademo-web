@@ -1,7 +1,7 @@
 import * as braze from '@braze/web-sdk';
 import { getSiaDemoRegistrationAttributes } from '../components/registrationModal.js';
+import { getPersistedExternalId } from '../logic/userSession.js';
 import { AppLogger } from './AppLogger.js';
-import { StorageManager } from './StorageManager.js';
 
 export const EVENT_LOGGED = 'EVENT_LOGGED';
 export const IAM_RECEIVED = 'IAM_RECEIVED';
@@ -200,18 +200,14 @@ class BrazeManagerClass {
   }
 
   /**
-   * On load: align SDK with persisted `user_id`.
+   * After SDK init: restore Braze user via `login` (changeUser + openSession) when storage has an external id.
+   * Reads from `user_id` or `user_session.external_id` (see getPersistedExternalId).
    * @returns {void}
    */
   syncUserFromStorage() {
-    const id = StorageManager.get('user_id', null);
-    if (id && typeof id === 'string' && id.trim()) {
-      try {
-        braze.changeUser(id.trim());
-      } catch (e) {
-        AppLogger.debug('[SDK]', 'changeUser on load skipped', e);
-      }
-    }
+    if (!this._initialized) return;
+    const id = getPersistedExternalId();
+    if (id) this.login(id);
   }
 
   /**

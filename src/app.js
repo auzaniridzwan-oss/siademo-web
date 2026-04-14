@@ -7,6 +7,7 @@ import { renderLoginModal } from './components/loginModal.js';
 import { renderDebugOverlay } from './components/debugOverlay.js';
 import { FLIGHT_DATA } from './data/flights.js';
 import { buildBookingPayload, isValidBookingSearch } from './logic/bookingPayload.js';
+import { getPersistedExternalId, persistAuthSession } from './logic/userSession.js';
 import { fetchSqDemoFlights } from './services/serpapiFlightsClient.js';
 import { StorageManager } from './managers/StorageManager.js';
 import { AppLogger } from './managers/AppLogger.js';
@@ -40,8 +41,7 @@ function isDebugUrl() {
  * @returns {boolean}
  */
 function hasLoggedInUserId() {
-  const id = StorageManager.get('user_id', null);
-  return typeof id === 'string' && id.trim().length > 0;
+  return !!getPersistedExternalId();
 }
 
 /**
@@ -340,8 +340,8 @@ function bindAfterRender() {
         return;
       }
 
-      const userId = StorageManager.get('user_id', null);
-      if (!userId || typeof userId !== 'string' || !userId.trim()) {
+      const userId = getPersistedExternalId();
+      if (!userId) {
         pendingSearchPayload = built.payload;
         AppLogger.info('[AUTH]', 'Search gated — registration required');
         openRegistrationModal();
@@ -431,7 +431,7 @@ function bindRegistrationForm() {
       return;
     }
 
-    StorageManager.set('user_id', result.externalId);
+    persistAuthSession(result.externalId, 'registration');
     AppLogger.info('[AUTH]', 'Registration complete');
     closeRegistrationModal();
 
@@ -481,8 +481,8 @@ function bindLoginForm() {
     }
 
     const normalizedEmail = emailRaw.toLowerCase();
+    persistAuthSession(normalizedEmail, 'login');
     BrazeManager.login(normalizedEmail);
-    StorageManager.set('user_id', normalizedEmail);
     AppLogger.info('[AUTH]', 'Login complete');
     closeLoginModal();
     render();
@@ -564,10 +564,10 @@ async function refreshDebugPanels() {
   if (sdkPre) {
     sdkPre.textContent = JSON.stringify(BrazeManager.getUserData(), null, 2);
   }
-  const uid = StorageManager.get('user_id', null);
+  const uid = getPersistedExternalId();
   if (restPre) {
-    if (!uid || typeof uid !== 'string') {
-      restPre.textContent = 'No user_id in storage';
+    if (!uid) {
+      restPre.textContent = 'No persisted external id in storage';
       return;
     }
     try {
