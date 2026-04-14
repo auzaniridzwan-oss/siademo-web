@@ -6,6 +6,7 @@ import { StorageManager } from './StorageManager.js';
 export const EVENT_LOGGED = 'EVENT_LOGGED';
 export const IAM_RECEIVED = 'IAM_RECEIVED';
 export const CONTENT_CARDS_UPDATED = 'CONTENT_CARDS_UPDATED';
+export const BANNERS_UPDATED = 'BANNERS_UPDATED';
 
 /**
  * Singleton-style Braze wrapper: init, user, logging, and pub/sub for overlays.
@@ -94,6 +95,16 @@ class BrazeManagerClass {
         } catch (e) {
           AppLogger.debug('[SDK]', 'subscribeToContentCardsUpdates unavailable', e);
         }
+
+        try {
+          braze.subscribeToBannersUpdates((banners) => {
+            AppLogger.info('[SDK]', 'Banners received', banners);
+            this.notify(BANNERS_UPDATED, { at: Date.now(), banners });
+          });
+        } catch (e) {
+          AppLogger.debug('[SDK]', 'subscribeToBannersUpdates unavailable', e);
+        }
+
         AppLogger.info('[SDK]', 'Braze Web SDK initialized', { baseUrl });
       }
       return ok;
