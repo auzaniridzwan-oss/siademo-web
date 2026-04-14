@@ -74,7 +74,7 @@ class BrazeManagerClass {
         try {
           braze.subscribeToInAppMessage(function (inAppMessage) {
             braze.showInAppMessage(inAppMessage);
-            AppLogger.debug('[SDK]', 'InAppMessage received', inAppMessage.message);
+            AppLogger.info('[SDK]', 'InAppMessage received', inAppMessage.message);
 
           });
 

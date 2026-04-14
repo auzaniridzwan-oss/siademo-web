@@ -16,7 +16,13 @@ export const AppLogger = {
   logs: [],
   MAX_LOGS: 100,
 
+  /**
+   * Verbose console output (includes `DEBUG` level). On in Vite dev (`import.meta.env.DEV`);
+   * in production, set `StorageManager` key `debug_mode` to opt in.
+   * @returns {boolean}
+   */
   get DEBUG_MODE() {
+    if (import.meta.env.DEV) return true;
     return !!StorageManager.get('debug_mode', false);
   },
 
