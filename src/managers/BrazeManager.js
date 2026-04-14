@@ -113,9 +113,9 @@ class BrazeManagerClass {
       braze.subscribeToInAppMessage((inAppMessage) => {
         braze.showInAppMessage(inAppMessage);
 
-        AppLogger.info('[SDK]', 'Getting InAppMessage Extras ', inAppMessage.messageExtras);
+        AppLogger.info('[SDK]', 'Getting InAppMessage Extras ', inAppMessage.extras);
 
-        const iamExtras = inAppMessage.messageExtras;
+        const iamExtras = inAppMessage.extras;
         if (!iamExtras || typeof iamExtras !== 'object') return;
 
         AppLogger.info('[SDK]', 'Building IAM Highlight Promo');
