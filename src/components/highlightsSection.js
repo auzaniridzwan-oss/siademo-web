@@ -1,5 +1,5 @@
 import { HIGHLIGHTS_DEMO_PROMOS } from '../data/highlightsDemo.js';
-import { BrazeManager, CONTENT_CARDS_UPDATED } from '../managers/BrazeManager.js';
+import { BrazeManager, CONTENT_CARDS_UPDATED, IAM_RECEIVED } from '../managers/BrazeManager.js';
 import { AppLogger } from '../managers/AppLogger.js';
 
 /**
@@ -12,7 +12,7 @@ import { AppLogger } from '../managers/AppLogger.js';
  * @property {string} [href]
  * @property {boolean} [external]
  * @property {Date|null} [expiresAt]
- * @property {'demo'|'braze'} source
+ * @property {'demo'|'braze'|'iam'} source
  * @property {import('@braze/web-sdk').Card} [brazeCard]
  */
 
@@ -145,6 +145,9 @@ export function createHighlightsSection(rootEl) {
   /** @type {HighlightPromo[]} */
   let stack = cloneDemoPromos();
 
+  /** @type {HighlightPromo[]} IAM-derived promos only; newest first; max {@link MAX_VISIBLE}. */
+  let iamStack = [];
+
   /** @type {Map<string, HighlightPromo>} */
   let visibleById = new Map();
 
@@ -155,14 +158,24 @@ export function createHighlightsSection(rootEl) {
   let lastRenderedKey = '';
 
   /**
-   * Braze snapshot on top; demo rows stay below. Prunes expired entries from the stack.
+   * IAM promos first, then Content Cards, then demo rows. Prunes expired entries from the stack.
+   * @param {import('@braze/web-sdk').ContentCards | undefined | null} contentCards
    */
   function applyBrazeContentCards(contentCards) {
     const brazeRows = BrazeManager.getHighlightPromosFromContentCards(contentCards);
     const demos = stack.filter((e) => e.source === 'demo');
-    stack = [...brazeRows, ...demos];
+    stack = [...iamStack, ...brazeRows, ...demos];
     pruneStack();
     paint();
+  }
+
+  /**
+   * @param {HighlightPromo} promo
+   */
+  function pushIamPromo(promo) {
+    iamStack = [promo, ...iamStack].slice(0, MAX_VISIBLE);
+    const cc = BrazeManager.getLatestContentCards();
+    applyBrazeContentCards(cc);
   }
 
   function pruneStack() {
@@ -211,7 +224,17 @@ export function createHighlightsSection(rootEl) {
     applyBrazeContentCards(cc);
   }
 
+  /**
+   * @param {{ promo?: HighlightPromo }} payload
+   */
+  function onIamReceived(payload) {
+    const promo = payload?.promo;
+    if (!promo || typeof promo.id !== 'string') return;
+    pushIamPromo(promo);
+  }
+
   const unsub = BrazeManager.subscribe(CONTENT_CARDS_UPDATED, onContentCardsUpdated);
+  const unsubIam = BrazeManager.subscribe(IAM_RECEIVED, onIamReceived);
 
   const expiryTimer = window.setInterval(() => {
     pruneStack();
@@ -226,6 +249,7 @@ export function createHighlightsSection(rootEl) {
      * @param {HighlightPromo[]} cards
      */
     setPromoCards(cards) {
+      iamStack = [];
       stack = Array.isArray(cards) ? cards.map((c) => ({ ...c })) : [];
       lastImpressionKey = '';
       lastRenderedKey = '';
@@ -234,6 +258,7 @@ export function createHighlightsSection(rootEl) {
 
     /** Restore demo-only stack. */
     resetToDemo() {
+      iamStack = [];
       stack = cloneDemoPromos();
       lastImpressionKey = '';
       lastRenderedKey = '';
@@ -245,6 +270,7 @@ export function createHighlightsSection(rootEl) {
       window.clearInterval(expiryTimer);
       try {
         unsub();
+        unsubIam();
       } catch (e) {
         AppLogger.warn('[UI]', 'Highlights dispose unsubscribe failed', e);
       }

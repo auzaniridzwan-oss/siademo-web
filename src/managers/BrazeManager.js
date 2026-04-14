@@ -8,6 +8,33 @@ export const IAM_RECEIVED = 'IAM_RECEIVED';
 export const CONTENT_CARDS_UPDATED = 'CONTENT_CARDS_UPDATED';
 export const BANNERS_UPDATED = 'BANNERS_UPDATED';
 
+/** Same 1×1 transparent GIF as Content Card fallback in `getHighlightPromosFromContentCards`. */
+const IAM_HIGHLIGHT_PLACEHOLDER_IMAGE =
+  'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+
+/**
+ * Builds a highlights row from IAM `messageExtras` (`Record<string, string>` per Braze InAppMessage).
+ * @param {Record<string, string>} extras
+ * @returns {import('../components/highlightsSection.js').HighlightPromo | null}
+ */
+function buildIamHighlightPromo(extras) {
+  const img = extras.iam_image ? String(extras.iam_image).trim() : '';
+  const rawTitle = extras.iam_title ? String(extras.iam_title).trim() : '';
+  const desc = extras.iam_message ? String(extras.iam_message).trim() : '';
+  if (!img && !rawTitle && !desc) return null;
+  const title = rawTitle || 'Offer';
+  const id = `iam-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return {
+    id,
+    title,
+    description: desc,
+    imageUrl: img || IAM_HIGHLIGHT_PLACEHOLDER_IMAGE,
+    imageAlt: '',
+    source: 'iam',
+    expiresAt: null,
+  };
+}
+
 /**
  * Singleton-style Braze wrapper: init, user, logging, and pub/sub for overlays.
  */
@@ -87,10 +114,19 @@ class BrazeManagerClass {
   configIAM() {
     braze.automaticallyShowInAppMessages();
     try {
-      braze.subscribeToInAppMessage(function (inAppMessage) {
+      braze.subscribeToInAppMessage((inAppMessage) => {
         braze.showInAppMessage(inAppMessage);
-        AppLogger.info('[SDK]', 'InAppMessage received', inAppMessage.message);
 
+        const iamExtras = inAppMessage.messageExtras;
+        if (!iamExtras || typeof iamExtras !== 'object') return;
+
+        const promo = buildIamHighlightPromo(
+          /** @type {Record<string, string>} */ (iamExtras),
+        );
+        if (!promo) return;
+
+        this.notify(IAM_RECEIVED, { promo, at: Date.now() });
+        AppLogger.info('[SDK]', 'InAppMessage received', inAppMessage.message);
       });
     } catch (e) {
       AppLogger.debug('[SDK]', 'subscribeToInAppMessage unavailable', e);
