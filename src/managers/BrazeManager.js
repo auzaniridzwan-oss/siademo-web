@@ -71,55 +71,10 @@ class BrazeManagerClass {
       });
       this._initialized = ok;
       if (ok) {
-        braze.automaticallyShowInAppMessages();
-        try {
-          braze.subscribeToInAppMessage(function (inAppMessage) {
-            braze.showInAppMessage(inAppMessage);
-            AppLogger.info('[SDK]', 'InAppMessage received', inAppMessage.message);
 
-          });
-
-          /*
-          braze.subscribeToInAppMessage(() => {
-            AppLogger.debug('[SDK]', 'InAppMessage received', e);
-            this.notify(IAM_RECEIVED, { at: Date.now() });
-          });
-          */
-        } catch (e) {
-          AppLogger.debug('[SDK]', 'subscribeToInAppMessage unavailable', e);
-        }
-        try {
-          braze.subscribeToContentCardsUpdates((contentCards) => {
-            this.notify(CONTENT_CARDS_UPDATED, { at: Date.now(), contentCards });
-          });
-        } catch (e) {
-          AppLogger.debug('[SDK]', 'subscribeToContentCardsUpdates unavailable', e);
-        }
-
-        try {
-          braze.subscribeToBannersUpdates((banners) => {
-            AppLogger.info('[SDK]', 'Banners received', banners);
-            this.notify(BANNERS_UPDATED, { at: Date.now(), banners });
-
-            AppLogger.info('[SDK]', 'Getting banner placements');
-            const highlight1Banner = braze.getBanner("sia_highlight_1");
-            if (highlight1Banner) {
-
-              AppLogger.info('[SDK]', 'Getting banner container');
-              const ux_highlight_1highlight1 = document.getElementById('ux_highlight_1');
-              if (!ux_highlight_1highlight1) return;
-
-              AppLogger.info('[SDK]', 'Updating banner into container.');
-              braze.insertBanner(highlight1Banner, ux_highlight_1highlight1);
-            }
-          });
-          AppLogger.info('[SDK]', 'Requesting banners refresh');
-          braze.requestBannersRefresh(["sia_highlight_1"]);
-
-        } catch (e) {
-          AppLogger.debug('[SDK]', 'subscribeToBannersUpdates unavailable', e);
-        }
-
+        this.configIAM()
+        this.configBanners();
+        //this.configCC();
         AppLogger.info('[SDK]', 'Braze Web SDK initialized', { baseUrl });
       }
       return ok;
@@ -127,6 +82,60 @@ class BrazeManagerClass {
       AppLogger.warn('[SDK]', 'Braze initialize failed', e);
       return false;
     }
+  }
+
+  configIAM() {
+    braze.automaticallyShowInAppMessages();
+    try {
+      braze.subscribeToInAppMessage(function (inAppMessage) {
+        braze.showInAppMessage(inAppMessage);
+        AppLogger.info('[SDK]', 'InAppMessage received', inAppMessage.message);
+
+      });
+    } catch (e) {
+      AppLogger.debug('[SDK]', 'subscribeToInAppMessage unavailable', e);
+    }
+  }
+
+  configBanners() {
+    try {
+
+      braze.subscribeToBannersUpdates((banners) => {
+        //Get qualified banners
+        AppLogger.info('[SDK]', 'Subscribed to banner updates ', banners);
+        this.notify(BANNERS_UPDATED, { at: Date.now(), banners });
+        AppLogger.info('[SDK]', 'Getting banner placements');
+        const highlight1Banner = braze.getBanner("sia_highlight_1");
+        if (!highlight1Banner) return;
+
+        //Get banner container DOM
+        AppLogger.info('[SDK]', 'Getting banner container');
+        const ux_highlight_1highlight1 = document.getElementById('ux_highlight_1');
+        if (!ux_highlight_1highlight1) return;
+
+        //Update banner into container
+        AppLogger.info('[SDK]', 'Updating banner into container.');
+        braze.insertBanner(highlight1Banner, ux_highlight_1highlight1);
+      });
+
+      //Request banners refresh
+      AppLogger.info('[SDK]', 'Requesting banners refresh');
+      braze.requestBannersRefresh(["sia_highlight_1"]);
+
+    } catch (e) {
+      AppLogger.debug('[SDK]', 'subscribeToBannersUpdates unavailable', e);
+    }
+  }
+
+  configCC() {
+    try {
+      braze.subscribeToContentCardsUpdates((contentCards) => {
+        this.notify(CONTENT_CARDS_UPDATED, { at: Date.now(), contentCards });
+      });
+    } catch (e) {
+      AppLogger.debug('[SDK]', 'subscribeToContentCardsUpdates unavailable', e);
+    }
+
   }
 
   /**
@@ -139,7 +148,7 @@ class BrazeManagerClass {
         braze.changeUser(externalId);
       }
       braze.openSession();
-      AppLogger.info('[AUTH]', 'Braze login / session opened', { externalIdPreview: `${externalId.slice(0, 3)}…` });
+      AppLogger.info('[AUTH]', 'Braze login / session opened', { externalIdPreview: `${externalId}…` });
     } catch (e) {
       AppLogger.warn('[AUTH]', 'Braze login failed', e);
     }
